@@ -169,8 +169,25 @@ tr:hover td { background:rgba(124,92,252,0.04); }
   .dashboard-layout { grid-template-columns:1fr; }
   .sidebar { display:none; }
   header { padding:0 16px; }
-  .dash-main { padding:20px 16px; }
+  .dash-main { padding:20px 16px; padding-bottom:90px; }
 }
+.mobile-nav {
+  display:none;
+  position:fixed; bottom:0; left:0; right:0; z-index:150;
+  background:var(--surface); border-top:1px solid var(--border);
+  padding:8px 4px env(safe-area-inset-bottom, 12px);
+  overflow-x:auto; white-space:nowrap;
+  justify-content:space-around; align-items:center;
+}
+.mobile-nav-btn {
+  display:inline-flex; flex-direction:column; align-items:center; gap:3px;
+  padding:4px 8px; border:none; background:transparent; color:var(--muted);
+  font-size:9px; font-family:'Noto Sans JP',sans-serif; cursor:pointer;
+  border-radius:8px; transition:all 0.2s; min-width:48px;
+}
+.mobile-nav-btn.active { color:var(--accent); background:rgba(124,92,252,0.1); }
+.mobile-nav-btn .mnav-icon { font-size:18px; line-height:1; }
+@media(max-width:768px) { .mobile-nav { display:flex; } }
 </style>
 </head>
 <body>
@@ -265,6 +282,15 @@ tr:hover td { background:rgba(124,92,252,0.04); }
         <a onclick="logout()">🚪 ログアウト</a>
       </nav>
     </aside>
+    <!-- モバイル用ボトムナビ -->
+    <div class="mobile-nav" id="mobile-nav">
+      <button class="mobile-nav-btn active" onclick="showDashTab('overview')"><span class="mnav-icon">📊</span>ダッシュボード</button>
+      <button class="mobile-nav-btn" onclick="showDashTab('posts')"><span class="mnav-icon">📄</span>投稿管理</button>
+      <button class="mobile-nav-btn" onclick="showDashTab('new-post')"><span class="mnav-icon">✏️</span>新規投稿</button>
+      <button class="mobile-nav-btn" onclick="showDashTab('requests')"><span class="mnav-icon">🕐</span>申請 <span id="mobile-pending-badge" style="background:var(--red);color:#fff;border-radius:8px;padding:0 5px;font-size:9px;display:none"></span></button>
+      <button class="mobile-nav-btn" onclick="showDashTab('members')"><span class="mnav-icon">👥</span>会員</button>
+      <button class="mobile-nav-btn" onclick="showDashTab('mail')"><span class="mnav-icon">✉️</span>メール</button>
+    </div>
     <main class="dash-main">
       <div id="dash-overview">
         <div class="dash-title">ダッシュボード</div>
@@ -639,6 +665,9 @@ function showDashTab(tab) {
   document.querySelectorAll('.sidebar-nav a').forEach((el,i)=>{
     el.classList.toggle('active',['overview','posts','new-post','requests','members','mail'][i]===tab);
   });
+  document.querySelectorAll('.mobile-nav-btn').forEach((el,i)=>{
+    el.classList.toggle('active',['overview','posts','new-post','requests','members','mail'][i]===tab);
+  });
   if (tab==='posts') renderPostsTable();
   if (tab==='members') renderMembersTable();
   if (tab==='requests') renderRequestsTable();
@@ -762,6 +791,8 @@ function updatePendingBadge() {
   const count=store.users.filter(u=>u.status==='pending').length;
   const b=document.getElementById('pending-badge');
   if (b) { b.textContent=count; b.style.display=count>0?'inline':'none'; }
+  const mb=document.getElementById('mobile-pending-badge');
+  if (mb) { mb.textContent=count; mb.style.display=count>0?'inline':'none'; }
 }
 
 // ── PROFILE ──
@@ -902,4 +933,3 @@ restoreSession();
 </script>
 </body>
 </html>
-
