@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>変人会 — 会員制ラウンジ</title>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Antique+Soft&family=Noto+Sans+JP:wght@300;400;500;700&family=Space+Mono:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root {
   --bg: #0d0d0f;
@@ -258,6 +259,7 @@ tr:hover td { background:rgba(124,92,252,0.04); }
         <a onclick="showDashTab('new-post')">✏️ 新規投稿</a>
         <a onclick="showDashTab('requests')">🕐 入会申請 <span id="pending-badge" style="background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px;display:none"></span></a>
         <a onclick="showDashTab('members')">👥 会員一覧</a>
+        <a onclick="showDashTab('mail')">✉️ メール配信 </a>
         <div class="sidebar-section">アカウント</div>
         <a onclick="showProfilePage()">⚙️ プロフィール</a>
         <a onclick="logout()">🚪 ログアウト</a>
@@ -320,6 +322,57 @@ tr:hover td { background:rgba(124,92,252,0.04); }
           <tbody id="members-tbody"></tbody></table>
         </div>
       </div>
+
+      <div id="dash-mail" style="display:none">
+        <div class="dash-title">メール配信</div>
+        <div class="dash-subtitle">// 承認済み会員へ一斉送信</div>
+
+        <!-- EmailJS設定パネル -->
+        <div class="post-form" style="margin-bottom:20px">
+          <h3 style="font-size:14px;color:var(--muted)">⚙️ EmailJS 設定</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px">
+            <div class="form-group" style="margin:0"><label>Public Key</label><input type="text" id="ejs-pubkey" placeholder="your_public_key"></div>
+            <div class="form-group" style="margin:0"><label>Service ID</label><input type="text" id="ejs-service" placeholder="service_xxxxxxx"></div>
+            <div class="form-group" style="margin:0"><label>Template ID</label><input type="text" id="ejs-template" placeholder="template_xxxxxxx"></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:12px;align-items:center">
+            <button class="btn btn-outline btn-sm" onclick="saveEmailJSConfig()">設定を保存</button>
+            <span id="ejs-status" style="font-size:12px;color:var(--muted);font-family:'Space Mono',monospace"></span>
+          </div>
+          <div style="margin-top:12px;padding:10px 12px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--muted);line-height:1.9">
+            📌 <a href="https://www.emailjs.com" target="_blank" style="color:var(--accent)">emailjs.com</a> で無料登録 → Public Key / Service ID / Template ID を取得して上に入力してください。<br>
+            テンプレートの変数: <code style="color:var(--gold)">{{to_name}}</code> {{to_email}} <code style="color:var(--gold)">{{subject}}</code> <code style="color:var(--gold)">{{message}}</code>
+          </div>
+        </div>
+
+        <!-- 送信先選択 -->
+        <div class="post-form" style="margin-bottom:20px">
+          <h3>送信先</h3>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+            <button class="btn btn-outline btn-sm" onclick="selectAllRecipients()">全員選択</button>
+            <button class="btn btn-ghost btn-sm" onclick="deselectAllRecipients()">全員解除</button>
+          </div>
+          <div id="recipient-list" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;padding:4px"></div>
+        </div>
+
+        <!-- メール本文 -->
+        <div class="post-form">
+          <h3>メール内容</h3>
+          <div class="form-group"><label>件名</label><input type="text" id="mail-subject" placeholder="例: 【変人会】新しい投稿のお知らせ"></div>
+          <div class="form-group"><label>本文</label><textarea id="mail-body" style="min-height:180px" placeholder="会員の皆さんへ&#10;&#10;..."></textarea></div>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:4px;flex-wrap:wrap">
+            <button class="btn btn-accent" onclick="sendMail()" id="send-mail-btn">📨 送信する</button>
+            <span id="mail-send-status" style="font-size:12px;color:var(--muted);font-family:'Space Mono',monospace"></span>
+          </div>
+        </div>
+
+        <!-- 送信履歴 -->
+        <div class="data-table" style="margin-top:24px">
+          <div class="table-header"><h3>送信履歴</h3></div>
+          <table><thead><tr><th>件名</th><th>送信先</th><th>日時</th><th>結果</th></tr></thead>
+          <tbody id="mail-history-tbody"></tbody></table>
+        </div>
+      </div>
     </main>
   </div>
 </div>
@@ -359,9 +412,7 @@ tr:hover td { background:rgba(124,92,252,0.04); }
       </div>
       <div class="form-switch">アカウントをお持ちでない方は <a onclick="switchModal('login-modal','register-modal')">入会申請</a></div>
       <div style="margin-top:14px;padding:10px 12px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;line-height:1.9">
-        admin: admin@henjinkai.jp / admin123<br>
-        member: user@example.com / pass123<br>
-        pending: pending@example.com / pass456
+        admin: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="4021242d292e0028252e2a292e2b21296e2a30">[email&#160;protected]</a> / admin123
       </div>
     </div>
   </div>
@@ -389,7 +440,7 @@ tr:hover td { background:rgba(124,92,252,0.04); }
 
 <div class="toast" id="toast"></div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 const CARD_COLORS = {
   'テクノロジー':'linear-gradient(135deg,#1a1a2e,#16213e)',
   'ビジネス':'linear-gradient(135deg,#1a1a1a,#2d1b2e)',
@@ -399,23 +450,73 @@ const CARD_COLORS = {
   'その他':'linear-gradient(135deg,#1a1a1f,#0d0d12)',
 };
 
-let store = {
-  users: [
-    { id:1, name:'管理者', email:'admin@henjinkai.jp', pass:'admin123', role:'admin', status:'approved', joined:'2024-01-01' },
-    { id:2, name:'田中 美咲', email:'user@example.com', pass:'pass123', role:'member', status:'approved', joined:'2024-03-15' },
-    { id:3, name:'鈴木 健太', email:'pending@example.com', pass:'pass456', role:'member', status:'pending', joined:'2025-02-20' }
-  ],
-  articles: [
-    { id:1, title:'「普通」とは何か——異端者の生存戦略', category:'哲学', type:'free', excerpt:'社会に「おかしい」と言われ続けた人間が、それでも生き延びてきた方法を考える。', body:'<p>「変わってるね」という言葉を、褒め言葉として受け取れるようになったのはいつからだろう。</p><p>子どもの頃、その言葉は刃だった。集団から外れることへの恐怖と、でも自分を曲げることへの嫌悪感の間で、ずっと揺れていた。</p><h3>異端であることのコスト</h3><p>変人であることには確かにコストがある。組織に馴染めない。会話が噛み合わない。「なぜそこまで考えるの」と言われる。しかし同時に、変人であることにしか得られないものもある。それは深さだ。</p>', date:'2025-01-10', emoji:'🦚' },
-    { id:2, title:'深夜3時の発見——睡眠不足と創造性の関係', category:'科学', type:'member', excerpt:'疲弊した脳が検閲を外したとき、人間は何を思いつくのか。神経科学からの考察。', body:'<p>眠れない夜に限って、奇妙なアイデアが湧いてくる。これは気のせいではないかもしれない。</p><p>前頭前皮質——論理・倫理・社会規範を担う脳の「上司」——は疲れると機能が低下する。そのとき、普段は抑圧されているアイデアが浮上してくる。</p><h3>デフォルトモードネットワーク</h3><p>何も考えていないときに活性化する「デフォルトモードネットワーク」は、創造性の源泉とされている。睡眠不足や疲労はこのネットワークを特殊な状態に置き、通常の思考回路とは異なる接続を生む。</p>', date:'2025-01-18', emoji:'🌙' },
-    { id:3, title:'趣味と仕事の境界線が溶けるとき', category:'ビジネス', type:'free', excerpt:'「好きなことで生きる」の罠と、それでも踏み込む理由。', body:'<p>好きなことを仕事にすると嫌いになる——よく聞く言葉だ。半分は本当だと思う。</p><p>趣味には締め切りがない。品質基準は自分だけが決める。失敗しても誰も傷つかない。仕事はその逆だ。でも、だからこそ成長する部分もある。</p><h3>最適解は「好きなことに隣接した仕事」かもしれない</h3><p>音楽が好きなら音楽家より音響エンジニアの方が長続きするかもしれない。料理が好きなら料理人より食品開発の方が合うかもしれない。</p>', date:'2025-01-25', emoji:'⚗️' },
-    { id:4, title:'情報密度——なぜ一部の人は同じ本から10倍学ぶのか', category:'テクノロジー', type:'member', excerpt:'読む量ではなく、抽出する密度の問題。認知科学から見た学習の非対称性。', body:'<p>同じ本を読んで、ある人は「面白かった」で終わり、別の人は思考体系を再構築する。この差はどこから来るのか。</p><p>それは「引っかかり」の数だと思う。既存知識との接続点が多い人ほど、新しい情報から得られるものが多い。</p><h3>スキーマの構築</h3><p>認知科学でいう「スキーマ」——知識の枠組み——が豊かなほど、新情報の定着が速い。だから最初の100冊は遅くても、1000冊目は加速する。</p>', date:'2025-02-05', emoji:'🧩' },
-    { id:5, title:'孤独の設計——一人でいることを技術として扱う', category:'哲学', type:'free', excerpt:'孤独は欠如ではなく、整備すべき空間だ。変人のための孤独論。', body:'<p>変人は往々にして一人でいる時間が長い。望んでそうしている人もいれば、結果としてそうなっている人もいる。</p><p>孤独の最大の問題は「暇」ではなく「反芻」だ。同じ思考がループする。批判的な内なる声が増幅される。</p><h3>意図的な孤独vs偶発的な孤独</h3><p>自分で選んだ孤独は創造の源泉になる。押しつけられた孤独は毒になる。同じ状況でも、意味づけと設計次第で全く別の体験になる。</p>', date:'2025-02-12', emoji:'🌌' },
-    { id:6, title:'「なぜ」を5回繰り返す人間の末路', category:'その他', type:'member', excerpt:'根本原因を追い続ける人間がたどり着く、奇妙で豊かな場所について。', body:'<p>「なぜ」を5回繰り返すとトヨタの問題解決になる。でも日常生活で5回繰り返すと、ちょっと面倒な人間になる。</p><p>なぜ人は働くのか。なぜ社会はこの形なのか。なぜ自分はここにいるのか。こういう問いを止められない人間が変人になる。</p><h3>問い続けることの副作用</h3><p>「なぜ」を繰り返す人間には副作用がある。単純に楽しめなくなる瞬間がある。映画を見ながら構造分析が始まる。でもその代わり、世界が立体的に見える。</p>', date:'2025-02-20', emoji:'🔍' },
-  ],
-  currentUser: null,
-  prevPage: 'home'
-};
+// ── DEFAULT DATA ──
+const DEFAULT_USERS = [
+  { id:1, name:'管理者', email:'admin@henjinkai.jp', pass:'admin123', role:'admin', status:'approved', joined:'2024-01-01' },
+  { id:2, name:'田中 美咲', email:'user@example.com', pass:'pass123', role:'member', status:'approved', joined:'2024-03-15' },
+  { id:3, name:'鈴木 健太', email:'pending@example.com', pass:'pass456', role:'member', status:'pending', joined:'2025-02-20' }
+];
+
+const DEFAULT_ARTICLES = [
+  { id:1, title:'「普通」とは何か——異端者の生存戦略', category:'哲学', type:'free', excerpt:'社会に「おかしい」と言われ続けた人間が、それでも生き延びてきた方法を考える。', body:'<p>「変わってるね」という言葉を、褒め言葉として受け取れるようになったのはいつからだろう。</p><p>子どもの頃、その言葉は刃だった。集団から外れることへの恐怖と、でも自分を曲げることへの嫌悪感の間で、ずっと揺れていた。</p><h3>異端であることのコスト</h3><p>変人であることには確かにコストがある。組織に馴染めない。会話が噛み合わない。「なぜそこまで考えるの」と言われる。しかし同時に、変人であることにしか得られないものもある。それは深さだ。</p>', date:'2025-01-10', emoji:'🦚' },
+  { id:2, title:'深夜3時の発見——睡眠不足と創造性の関係', category:'科学', type:'member', excerpt:'疲弊した脳が検閲を外したとき、人間は何を思いつくのか。神経科学からの考察。', body:'<p>眠れない夜に限って、奇妙なアイデアが湧いてくる。これは気のせいではないかもしれない。</p><p>前頭前皮質——論理・倫理・社会規範を担う脳の「上司」——は疲れると機能が低下する。そのとき、普段は抑圧されているアイデアが浮上してくる。</p><h3>デフォルトモードネットワーク</h3><p>何も考えていないときに活性化する「デフォルトモードネットワーク」は、創造性の源泉とされている。睡眠不足や疲労はこのネットワークを特殊な状態に置き、通常の思考回路とは異なる接続を生む。</p>', date:'2025-01-18', emoji:'🌙' },
+  { id:3, title:'趣味と仕事の境界線が溶けるとき', category:'ビジネス', type:'free', excerpt:'「好きなことで生きる」の罠と、それでも踏み込む理由。', body:'<p>好きなことを仕事にすると嫌いになる——よく聞く言葉だ。半分は本当だと思う。</p><p>趣味には締め切りがない。品質基準は自分だけが決める。失敗しても誰も傷つかない。仕事はその逆だ。でも、だからこそ成長する部分もある。</p><h3>最適解は「好きなことに隣接した仕事」かもしれない</h3><p>音楽が好きなら音楽家より音響エンジニアの方が長続きするかもしれない。料理が好きなら料理人より食品開発の方が合うかもしれない。</p>', date:'2025-01-25', emoji:'⚗️' },
+  { id:4, title:'情報密度——なぜ一部の人は同じ本から10倍学ぶのか', category:'テクノロジー', type:'member', excerpt:'読む量ではなく、抽出する密度の問題。認知科学から見た学習の非対称性。', body:'<p>同じ本を読んで、ある人は「面白かった」で終わり、別の人は思考体系を再構築する。この差はどこから来るのか。</p><p>それは「引っかかり」の数だと思う。既存知識との接続点が多い人ほど、新しい情報から得られるものが多い。</p><h3>スキーマの構築</h3><p>認知科学でいう「スキーマ」——知識の枠組み——が豊かなほど、新情報の定着が速い。だから最初の100冊は遅くても、1000冊目は加速する。</p>', date:'2025-02-05', emoji:'🧩' },
+  { id:5, title:'孤独の設計——一人でいることを技術として扱う', category:'哲学', type:'free', excerpt:'孤独は欠如ではなく、整備すべき空間だ。変人のための孤独論。', body:'<p>変人は往々にして一人でいる時間が長い。望んでそうしている人もいれば、結果としてそうなっている人もいる。</p><p>孤独の最大の問題は「暇」ではなく「反芻」だ。同じ思考がループする。批判的な内なる声が増幅される。</p><h3>意図的な孤独vs偶発的な孤独</h3><p>自分で選んだ孤独は創造の源泉になる。押しつけられた孤独は毒になる。同じ状況でも、意味づけと設計次第で全く別の体験になる。</p>', date:'2025-02-12', emoji:'🌌' },
+  { id:6, title:'「なぜ」を5回繰り返す人間の末路', category:'その他', type:'member', excerpt:'根本原因を追い続ける人間がたどり着く、奇妙で豊かな場所について。', body:'<p>「なぜ」を5回繰り返すとトヨタの問題解決になる。でも日常生活で5回繰り返すと、ちょっと面倒な人間になる。</p><p>なぜ人は働くのか。なぜ社会はこの形なのか。なぜ自分はここにいるのか。こういう問いを止められない人間が変人になる。</p><h3>問い続けることの副作用</h3><p>「なぜ」を繰り返す人間には副作用がある。単純に楽しめなくなる瞬間がある。映画を見ながら構造分析が始まる。でもその代わり、世界が立体的に見える。</p>', date:'2025-02-20', emoji:'🔍' },
+];
+
+// ── LOCALSTORAGE PERSISTENCE ──
+const LS_USERS = 'henjinkai_users';
+const LS_ARTICLES = 'henjinkai_articles';
+const LS_SESSION = 'henjinkai_session';
+
+function loadStore() {
+  try {
+    const users = JSON.parse(localStorage.getItem(LS_USERS));
+    const articles = JSON.parse(localStorage.getItem(LS_ARTICLES));
+    return {
+      users: users || JSON.parse(JSON.stringify(DEFAULT_USERS)),
+      articles: articles || JSON.parse(JSON.stringify(DEFAULT_ARTICLES)),
+      currentUser: null,
+      prevPage: 'home'
+    };
+  } catch(e) {
+    return {
+      users: JSON.parse(JSON.stringify(DEFAULT_USERS)),
+      articles: JSON.parse(JSON.stringify(DEFAULT_ARTICLES)),
+      currentUser: null,
+      prevPage: 'home'
+    };
+  }
+}
+
+function saveUsers() {
+  localStorage.setItem(LS_USERS, JSON.stringify(store.users));
+}
+function saveArticles() {
+  localStorage.setItem(LS_ARTICLES, JSON.stringify(store.articles));
+}
+
+let store = loadStore();
+
+// セッション復元（リロード後も維持）
+function restoreSession() {
+  try {
+    const sessionId = parseInt(localStorage.getItem(LS_SESSION));
+    if (sessionId) {
+      const user = store.users.find(u => u.id === sessionId && u.status === 'approved');
+      if (user) {
+        store.currentUser = user;
+        updateNav();
+        if (user.role === 'admin') { renderAdminDashboard(); showPage('admin'); }
+        else { renderMemberHome(); showPage('member'); }
+        return true;
+      }
+    }
+  } catch(e) {}
+  return false;
+}
 
 // ── NAVIGATION ──
 function showPage(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); window.scrollTo(0,0); }
@@ -435,6 +536,7 @@ function doLogin() {
   if (user.status==='pending') { showError('login-error','⏳ 申請はただいま審査中です。管理者の承認をお待ちください。'); return; }
   if (user.status==='rejected') { showError('login-error','❌ 申し訳ありませんが、入会申請が承認されませんでした。'); return; }
   store.currentUser = user;
+  localStorage.setItem(LS_SESSION, user.id);
   hideModal('login-modal');
   updateNav();
   toast('ようこそ、'+user.name+'さん');
@@ -449,14 +551,22 @@ function doRegister() {
   if (!name||!email||!pass) { showError('reg-error','すべての項目を入力してください'); return; }
   if (pass.length<6) { showError('reg-error','パスワードは6文字以上にしてください'); return; }
   if (store.users.find(u=>u.email===email)) { showError('reg-error','このメールアドレスはすでに登録されています'); return; }
-  store.users.push({ id:Date.now(), name, email, pass, role:'member', status:'pending', joined:new Date().toISOString().slice(0,10) });
+  const newUser = { id:Date.now(), name, email, pass, role:'member', status:'pending', joined:new Date().toISOString().slice(0,10) };
+  store.users.push(newUser);
+  saveUsers(); // ← 永続保存
   document.getElementById('reg-error').style.display='none';
   const s=document.getElementById('reg-success'); s.textContent='✅ 申請を受け付けました。管理者の承認後にログインできます。'; s.style.display='block';
   ['reg-name','reg-email','reg-pass'].forEach(id=>document.getElementById(id).value='');
   updatePendingBadge();
 }
 
-function logout() { store.currentUser=null; updateNav(); showPage('home'); toast('ログアウトしました'); }
+function logout() {
+  store.currentUser=null;
+  localStorage.removeItem(LS_SESSION);
+  updateNav();
+  showPage('home');
+  toast('ログアウトしました');
+}
 
 function updateNav() {
   const nav = document.getElementById('nav-area');
@@ -523,15 +633,16 @@ function openArticle(id) {
 
 // ── ADMIN ──
 function showDashTab(tab) {
-  ['overview','posts','new-post','requests','members'].forEach(t=>{
+  ['overview','posts','new-post','requests','members','mail'].forEach(t=>{
     document.getElementById('dash-'+t).style.display=t===tab?'block':'none';
   });
   document.querySelectorAll('.sidebar-nav a').forEach((el,i)=>{
-    el.classList.toggle('active',['overview','posts','new-post','requests','members'][i]===tab);
+    el.classList.toggle('active',['overview','posts','new-post','requests','members','mail'][i]===tab);
   });
   if (tab==='posts') renderPostsTable();
   if (tab==='members') renderMembersTable();
   if (tab==='requests') renderRequestsTable();
+  if (tab==='mail') renderMailTab();
 }
 
 function renderAdminDashboard() {
@@ -595,7 +706,6 @@ function renderMembersTable() {
 
 // ── ADMIN-ONLY: Post & Delete ──
 function publishPost() {
-  // Double-check: only admin can call this (button only shown to admin, but guard anyway)
   if (!store.currentUser || store.currentUser.role!=='admin') { toast('⛔ 管理者のみ投稿できます'); return; }
   const title=document.getElementById('new-title').value.trim();
   const body=document.getElementById('new-body').value.trim();
@@ -603,6 +713,7 @@ function publishPost() {
   if (!title||!body) { toast('⚠️ タイトルと本文を入力してください'); return; }
   const emojis=['💡','🔬','🦠','🧿','⚡','🌀','🎯','🔮'];
   store.articles.unshift({ id:Date.now(), title, category:document.getElementById('new-category').value, type:document.getElementById('new-type').value, excerpt:excerpt||title, body:body.split('\n\n').map(p=>`<p>${p}</p>`).join(''), date:new Date().toISOString().slice(0,10), emoji:emojis[Math.floor(Math.random()*emojis.length)] });
+  saveArticles(); // ← 永続保存
   toast('✅ 投稿を公開しました');
   clearPostForm();
   renderAdminDashboard();
@@ -618,6 +729,7 @@ function deleteArticle(id) {
   if (!store.currentUser || store.currentUser.role!=='admin') { toast('⛔ 管理者のみ削除できます'); return; }
   if (!confirm('この投稿を削除しますか？')) return;
   store.articles=store.articles.filter(a=>a.id!==id);
+  saveArticles(); // ← 永続保存
   renderHome();
   if (store.currentUser) renderMemberHome();
   if (document.getElementById('dash-posts').style.display!=='none') renderPostsTable();
@@ -627,17 +739,22 @@ function deleteArticle(id) {
 
 function approveUser(id) {
   const u=store.users.find(u=>u.id===id); if (!u) return;
-  u.status='approved'; renderRequestsTable(); renderAdminDashboard(); updatePendingBadge();
+  u.status='approved';
+  saveUsers(); // ← 永続保存
+  renderRequestsTable(); renderAdminDashboard(); updatePendingBadge();
   toast('✅ '+u.name+'さんの入会を承認しました');
 }
 function rejectUser(id) {
   const u=store.users.find(u=>u.id===id); if (!u||!confirm(u.name+'さんの申請を却下しますか？')) return;
-  u.status='rejected'; renderRequestsTable(); renderAdminDashboard(); updatePendingBadge();
+  u.status='rejected';
+  saveUsers(); // ← 永続保存
+  renderRequestsTable(); renderAdminDashboard(); updatePendingBadge();
   toast('❌ '+u.name+'さんの申請を却下しました');
 }
 function deleteMember(id) {
   const u=store.users.find(u=>u.id===id); if (!u||!confirm(u.name+'さんを削除しますか？')) return;
   store.users=store.users.filter(x=>x.id!==id);
+  saveUsers(); // ← 永続保存
   renderMembersTable(); renderRequestsTable(); renderAdminDashboard(); updatePendingBadge();
   toast('🗑️ 会員を削除しました');
 }
@@ -661,8 +778,107 @@ function showProfilePage() {
 function saveProfile() {
   const name=document.getElementById('edit-name').value.trim();
   if (!name) { toast('⚠️ 名前を入力してください'); return; }
-  store.currentUser.name=name; store.users.find(u=>u.id===store.currentUser.id).name=name;
+  store.currentUser.name=name;
+  store.users.find(u=>u.id===store.currentUser.id).name=name;
+  saveUsers(); // ← 永続保存
   updateNav(); showProfilePage(); toast('✅ プロフィールを更新しました');
+}
+
+// ── MODALS ──
+function showModal(id) { document.getElementById(id).classList.add('open'); }
+function hideModal(id) {
+  document.getElementById(id).classList.remove('open');
+  ['login-error','reg-error','reg-success'].forEach(e=>{ const el=document.getElementById(e); if(el) el.style.display='none'; });
+}
+function closeModal(e,id) { if(e.target===e.currentTarget) hideModal(id); }
+function switchModal(from,to) { hideModal(from); showModal(to); }
+function showError(id,msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; }
+// ── MAIL ──
+const LS_EJSCONFIG = 'henjinkai_ejsconfig';
+const LS_MAILHISTORY = 'henjinkai_mailhistory';
+
+function loadEmailJSConfig() {
+  try { return JSON.parse(localStorage.getItem(LS_EJSCONFIG)) || {}; } catch(e) { return {}; }
+}
+function saveEmailJSConfig() {
+  const cfg = {
+    pubkey: document.getElementById('ejs-pubkey').value.trim(),
+    service: document.getElementById('ejs-service').value.trim(),
+    template: document.getElementById('ejs-template').value.trim(),
+  };
+  if (!cfg.pubkey || !cfg.service || !cfg.template) { document.getElementById('ejs-status').textContent='⚠️ 3項目すべて入力してください'; return; }
+  localStorage.setItem(LS_EJSCONFIG, JSON.stringify(cfg));
+  document.getElementById('ejs-status').textContent='✅ 保存しました';
+  setTimeout(()=>document.getElementById('ejs-status').textContent='', 3000);
+}
+
+function renderMailTab() {
+  const cfg = loadEmailJSConfig();
+  if (cfg.pubkey) document.getElementById('ejs-pubkey').value = cfg.pubkey;
+  if (cfg.service) document.getElementById('ejs-service').value = cfg.service;
+  if (cfg.template) document.getElementById('ejs-template').value = cfg.template;
+
+  const members = store.users.filter(u => u.status === 'approved');
+  const list = document.getElementById('recipient-list');
+  list.innerHTML = members.length ? members.map(u => `
+    <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border-radius:6px;cursor:pointer;border:1px solid var(--border)">
+      <input type="checkbox" data-uid="${u.id}" checked style="accent-color:var(--accent);width:16px;height:16px">
+      <span style="font-size:13px;font-weight:500">${u.name}</span>
+      <span style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-left:auto">${u.email}</span>
+      <span class="badge ${u.role==='admin'?'badge-admin':'badge-approved'}">${u.role==='admin'?'管理者':'会員'}</span>
+    </label>`).join('') : '<div class="empty-state"><div class="empty-icon">👥</div><p>承認済み会員がいません</p></div>';
+  renderMailHistory();
+}
+
+function selectAllRecipients() {
+  document.querySelectorAll('#recipient-list input[type=checkbox]').forEach(c=>c.checked=true);
+}
+function deselectAllRecipients() {
+  document.querySelectorAll('#recipient-list input[type=checkbox]').forEach(c=>c.checked=false);
+}
+
+async function sendMail() {
+  const cfg = loadEmailJSConfig();
+  if (!cfg.pubkey || !cfg.service || !cfg.template) { toast('⚠️ まずEmailJS設定を入力・保存してください'); return; }
+  const subject = document.getElementById('mail-subject').value.trim();
+  const body = document.getElementById('mail-body').value.trim();
+  if (!subject || !body) { toast('⚠️ 件名と本文を入力してください'); return; }
+  const checked = [...document.querySelectorAll('#recipient-list input[type=checkbox]:checked')];
+  if (!checked.length) { toast('⚠️ 送信先を選択してください'); return; }
+  const recipients = checked.map(c => store.users.find(u=>u.id===parseInt(c.dataset.uid))).filter(Boolean);
+  const btn = document.getElementById('send-mail-btn');
+  const status = document.getElementById('mail-send-status');
+  btn.disabled = true; btn.textContent = '送信中...';
+  emailjs.init(cfg.pubkey);
+  let success = 0, fail = 0;
+  for (const u of recipients) {
+    try {
+      await emailjs.send(cfg.service, cfg.template, {
+        to_name: u.name, to_email: u.email, subject, message: body, from_name: '変人会',
+      });
+      success++;
+    } catch(e) { console.error('EmailJS error', u.email, e); fail++; }
+    status.textContent = `送信中... ${success+fail}/${recipients.length}`;
+  }
+  const history = JSON.parse(localStorage.getItem(LS_MAILHISTORY) || '[]');
+  history.unshift({ subject, count: recipients.length, success, fail, date: new Date().toLocaleString('ja-JP'), sender: store.currentUser.name });
+  localStorage.setItem(LS_MAILHISTORY, JSON.stringify(history.slice(0, 30)));
+  btn.disabled = false; btn.textContent = '📨 送信する'; status.textContent = '';
+  renderMailHistory();
+  toast(fail===0 ? `✅ ${success}件送信完了` : `⚠️ 成功${success}件 / 失敗${fail}件`);
+}
+
+function renderMailHistory() {
+  const history = JSON.parse(localStorage.getItem(LS_MAILHISTORY) || '[]');
+  const tbody = document.getElementById('mail-history-tbody');
+  if (!tbody) return;
+  if (!history.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📭</div><p>送信履歴はありません</p></div></td></tr>'; return; }
+  tbody.innerHTML = history.map(h => `<tr>
+    <td style="font-weight:500">${h.subject}</td>
+    <td style="color:var(--muted);font-size:12px">${h.count}人</td>
+    <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">${h.date}</td>
+    <td><span class="badge ${h.fail===0?'badge-approved':'badge-pending'}">${h.fail===0?'✓ 成功':'⚠ 一部失敗'}</span></td>
+  </tr>`).join('');
 }
 
 // ── MODALS ──
@@ -682,6 +898,7 @@ function toast(msg) {
 // ── INIT ──
 renderHome();
 updatePendingBadge();
+restoreSession();
 </script>
 </body>
 </html>
