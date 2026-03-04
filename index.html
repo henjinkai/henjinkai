@@ -233,7 +233,10 @@ tr:hover td { background:rgba(124,92,252,0.04); }
   <div class="container">
     <div class="section-head">
       <span class="section-label">// all posts</span>
-      <span id="member-greeting" style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace"></span>
+      <div style="display:flex;gap:12px;align-items:center">
+        <button class="btn btn-outline btn-sm" onclick="openDirectory()">👥 メンバー一覧</button>
+        <span id="member-greeting" style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace"></span>
+      </div>
     </div>
     <div class="article-grid" id="member-article-grid"></div>
   </div>
@@ -403,6 +406,18 @@ tr:hover td { background:rgba(124,92,252,0.04); }
   </div>
 </div>
 
+<!-- PAGE: MEMBER DIRECTORY -->
+<div id="page-directory" class="page">
+  <div class="container" style="max-width:860px">
+    <button class="btn btn-outline btn-sm" onclick="goBack()" style="margin-bottom:28px">← 戻る</button>
+    <div class="section-head">
+      <span class="section-label">// members directory</span>
+      <span id="dir-count" style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace"></span>
+    </div>
+    <div id="directory-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px"></div>
+  </div>
+</div>
+
 <!-- PAGE: PROFILE -->
 <div id="page-profile" class="page">
   <div class="profile-area">
@@ -414,10 +429,19 @@ tr:hover td { background:rgba(124,92,252,0.04); }
       <div class="profile-email" id="profile-email"></div>
       <div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap" id="profile-badges"></div>
       <hr style="border:none;border-top:1px solid var(--border);margin-bottom:20px">
-      <div class="form-group"><label>表示名を変更</label><input type="text" id="edit-name"></div>
-      <div style="display:flex;gap:10px;margin-top:8px">
-        <button class="btn btn-accent" onclick="saveProfile()">保存する</button>
-        <button class="btn btn-danger btn-sm" onclick="logout()" style="padding:10px 20px">ログアウト</button>
+      <div class="form-group"><label>表示名</label><input type="text" id="edit-name"></div>
+      <div class="form-group"><label>所属会社・組織</label><input type="text" id="edit-company" placeholder="株式会社〇〇 / フリーランス など"></div>
+      <div class="form-group"><label>メールアドレス</label><input type="email" id="edit-email"></div>
+      <div class="form-group"><label>新しいパスワード（変更する場合のみ）</label><input type="password" id="edit-pass" placeholder="6文字以上"></div>
+      <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-accent" onclick="saveProfile()">💾 保存する</button>
+        <button class="btn btn-ghost" onclick="logout()">ログアウト</button>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:24px 0 16px">
+      <div style="background:rgba(252,92,92,0.06);border:1px solid rgba(252,92,92,0.2);border-radius:8px;padding:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--red);margin-bottom:6px">⚠️ アカウント削除</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7">アカウントを削除すると元に戻せません。すべてのデータが失われます。</div>
+        <button class="btn btn-danger btn-sm" onclick="deleteOwnAccount()">アカウントを削除する</button>
       </div>
     </div>
   </div>
@@ -453,6 +477,7 @@ tr:hover td { background:rgba(124,92,252,0.04); }
       <div class="error-msg" id="reg-error"></div>
       <div class="success-msg" id="reg-success"></div>
       <div class="form-group"><label>お名前</label><input type="text" id="reg-name" placeholder="山田 太郎"></div>
+      <div class="form-group"><label>所属会社・組織（任意）</label><input type="text" id="reg-company" placeholder="株式会社〇〇 / フリーランス など"></div>
       <div class="form-group"><label>メールアドレス</label><input type="email" id="reg-email" placeholder="you@example.com"></div>
       <div class="form-group"><label>パスワード（6文字以上）</label><input type="password" id="reg-pass" placeholder="••••••••"></div>
       <div class="form-actions">
@@ -460,6 +485,32 @@ tr:hover td { background:rgba(124,92,252,0.04); }
         <button class="btn btn-accent" onclick="doRegister()">申請する</button>
       </div>
       <div class="form-switch">すでに会員の方は <a onclick="switchModal('register-modal','login-modal')">ログイン</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Admin Edit Member -->
+<div class="modal-overlay" id="edit-member-modal" onclick="closeModal(event,'edit-member-modal')">
+  <div class="modal">
+    <div class="modal-stripe"></div>
+    <div class="modal-header"><h2>会員情報を編集</h2><p style="color:var(--muted);font-size:13px">管理者による変更</p></div>
+    <div class="modal-body">
+      <div class="error-msg" id="edit-member-error"></div>
+      <input type="hidden" id="edit-member-id">
+      <div class="form-group"><label>表示名</label><input type="text" id="edit-member-name"></div>
+      <div class="form-group"><label>所属会社・組織</label><input type="text" id="edit-member-company" placeholder="株式会社〇〇 / フリーランス など"></div>
+      <div class="form-group"><label>メールアドレス</label><input type="email" id="edit-member-email"></div>
+      <div class="form-group"><label>新しいパスワード（変更する場合のみ）</label><input type="password" id="edit-member-pass" placeholder="6文字以上"></div>
+      <div class="form-group"><label>権限</label>
+        <select id="edit-member-role">
+          <option value="member">会員</option>
+          <option value="admin">管理者</option>
+        </select>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="hideModal('edit-member-modal')">閉じる</button>
+        <button class="btn btn-accent" onclick="saveEditMember()">💾 保存する</button>
+      </div>
     </div>
   </div>
 </div>
@@ -478,9 +529,9 @@ const CARD_COLORS = {
 
 // ── DEFAULT DATA ──
 const DEFAULT_USERS = [
-  { id:1, name:'管理者', email:'admin@henjinkai.jp', pass:'admin123', role:'admin', status:'approved', joined:'2024-01-01' },
-  { id:2, name:'田中 美咲', email:'user@example.com', pass:'pass123', role:'member', status:'approved', joined:'2024-03-15' },
-  { id:3, name:'鈴木 健太', email:'pending@example.com', pass:'pass456', role:'member', status:'pending', joined:'2025-02-20' }
+  { id:1, name:'管理者', company:'変人会', email:'admin@henjinkai.jp', pass:'admin123', role:'admin', status:'approved', joined:'2024-01-01' },
+  { id:2, name:'田中 美咲', company:'株式会社サンプル', email:'user@example.com', pass:'pass123', role:'member', status:'approved', joined:'2024-03-15' },
+  { id:3, name:'鈴木 健太', company:'フリーランス', email:'pending@example.com', pass:'pass456', role:'member', status:'pending', joined:'2025-02-20' }
 ];
 
 const DEFAULT_ARTICLES = [
@@ -572,17 +623,18 @@ function doLogin() {
 
 function doRegister() {
   const name = document.getElementById('reg-name').value.trim();
+  const company = document.getElementById('reg-company').value.trim();
   const email = document.getElementById('reg-email').value.trim();
   const pass = document.getElementById('reg-pass').value;
-  if (!name||!email||!pass) { showError('reg-error','すべての項目を入力してください'); return; }
+  if (!name||!email||!pass) { showError('reg-error','名前・メール・パスワードを入力してください'); return; }
   if (pass.length<6) { showError('reg-error','パスワードは6文字以上にしてください'); return; }
   if (store.users.find(u=>u.email===email)) { showError('reg-error','このメールアドレスはすでに登録されています'); return; }
-  const newUser = { id:Date.now(), name, email, pass, role:'member', status:'pending', joined:new Date().toISOString().slice(0,10) };
+  const newUser = { id:Date.now(), name, company:company||'', email, pass, role:'member', status:'pending', joined:new Date().toISOString().slice(0,10) };
   store.users.push(newUser);
-  saveUsers(); // ← 永続保存
+  saveUsers();
   document.getElementById('reg-error').style.display='none';
   const s=document.getElementById('reg-success'); s.textContent='✅ 申請を受け付けました。管理者の承認後にログインできます。'; s.style.display='block';
-  ['reg-name','reg-email','reg-pass'].forEach(id=>document.getElementById(id).value='');
+  ['reg-name','reg-company','reg-email','reg-pass'].forEach(id=>document.getElementById(id).value='');
   updatePendingBadge();
 }
 
@@ -729,7 +781,10 @@ function renderMembersTable() {
     <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">${u.email}</td>
     <td><span class="badge ${u.role==='admin'?'badge-admin':'badge-approved'}">${u.role==='admin'?'管理者':'会員'}</span></td>
     <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">${u.joined}</td>
-    <td>${u.role!=='admin'?`<button class="btn btn-danger btn-sm" onclick="deleteMember(${u.id})">削除</button>`:'—'}</td>
+    <td style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="openEditMemberModal(${u.id})">✏️ 編集</button>
+      ${u.role!=='admin'?`<button class="btn btn-danger btn-sm" onclick="deleteMember(${u.id})">削除</button>`:'—'}
+    </td>
   </tr>`).join('');
 }
 
@@ -804,15 +859,91 @@ function showProfilePage() {
   document.getElementById('profile-email').textContent=u.email;
   document.getElementById('profile-badges').innerHTML=`<span class="badge ${u.role==='admin'?'badge-admin':'badge-approved'}">${u.role==='admin'?'管理者':'会員'}</span><span class="badge" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border)">入会: ${u.joined}</span>`;
   document.getElementById('edit-name').value=u.name;
+  document.getElementById('edit-company').value=u.company||'';
+  document.getElementById('edit-email').value=u.email;
+  document.getElementById('edit-pass').value='';
   showPage('profile');
 }
 function saveProfile() {
   const name=document.getElementById('edit-name').value.trim();
-  if (!name) { toast('⚠️ 名前を入力してください'); return; }
-  store.currentUser.name=name;
-  store.users.find(u=>u.id===store.currentUser.id).name=name;
-  saveUsers(); // ← 永続保存
+  const company=document.getElementById('edit-company').value.trim();
+  const email=document.getElementById('edit-email').value.trim();
+  const pass=document.getElementById('edit-pass').value;
+  if (!name||!email) { toast('⚠️ 名前とメールは必須です'); return; }
+  if (pass && pass.length<6) { toast('⚠️ パスワードは6文字以上にしてください'); return; }
+  const dup=store.users.find(u=>u.email===email && u.id!==store.currentUser.id);
+  if (dup) { toast('⚠️ そのメールアドレスはすでに使われています'); return; }
+  const u=store.users.find(u=>u.id===store.currentUser.id);
+  u.name=name; u.company=company; u.email=email;
+  if (pass) u.pass=pass;
+  store.currentUser=u;
+  saveUsers();
   updateNav(); showProfilePage(); toast('✅ プロフィールを更新しました');
+}
+function deleteOwnAccount() {
+  const u=store.currentUser;
+  if (u.role==='admin') { toast('⛔ 管理者アカウントは削除できません'); return; }
+  if (!confirm('本当にアカウントを削除しますか？\nこの操作は取り消せません。')) return;
+  store.users=store.users.filter(x=>x.id!==u.id);
+  saveUsers();
+  store.currentUser=null;
+  localStorage.removeItem(LS_SESSION);
+  updateNav(); showPage('home');
+  toast('🗑️ アカウントを削除しました');
+}
+
+// ── ADMIN: Edit Member ──
+function openEditMemberModal(id) {
+  const u=store.users.find(u=>u.id===id); if (!u) return;
+  document.getElementById('edit-member-id').value=u.id;
+  document.getElementById('edit-member-name').value=u.name;
+  document.getElementById('edit-member-company').value=u.company||'';
+  document.getElementById('edit-member-email').value=u.email;
+  document.getElementById('edit-member-pass').value='';
+  document.getElementById('edit-member-role').value=u.role;
+  document.getElementById('edit-member-error').style.display='none';
+  showModal('edit-member-modal');
+}
+function saveEditMember() {
+  const id=parseInt(document.getElementById('edit-member-id').value);
+  const name=document.getElementById('edit-member-name').value.trim();
+  const company=document.getElementById('edit-member-company').value.trim();
+  const email=document.getElementById('edit-member-email').value.trim();
+  const pass=document.getElementById('edit-member-pass').value;
+  const role=document.getElementById('edit-member-role').value;
+  if (!name||!email) { showError('edit-member-error','名前とメールは必須です'); return; }
+  if (pass && pass.length<6) { showError('edit-member-error','パスワードは6文字以上にしてください'); return; }
+  const dup=store.users.find(u=>u.email===email && u.id!==id);
+  if (dup) { showError('edit-member-error','そのメールアドレスはすでに使われています'); return; }
+  const u=store.users.find(u=>u.id===id); if (!u) return;
+  u.name=name; u.company=company; u.email=email; u.role=role;
+  if (pass) u.pass=pass;
+  if (store.currentUser && store.currentUser.id===id) store.currentUser=u;
+  saveUsers();
+  hideModal('edit-member-modal');
+  renderMembersTable(); updateNav();
+  toast('✅ '+name+'さんの情報を更新しました');
+}
+
+// ── MEMBER DIRECTORY ──
+function openDirectory() {
+  store.prevPage = store.currentUser.role==='admin' ? 'admin' : 'member';
+  const members = store.users.filter(u => u.status==='approved');
+  document.getElementById('dir-count').textContent = members.length + ' members';
+  document.getElementById('directory-grid').innerHTML = members.map(u => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;transition:all 0.2s"
+      onmouseover="this.style.borderColor='var(--accent)';this.style.transform='translateY(-2px)'"
+      onmouseout="this.style.borderColor='var(--border)';this.style.transform=''">
+      <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Zen Antique Soft',serif;font-size:22px;color:#fff">
+        ${u.name.charAt(0)}
+      </div>
+      <div>
+        <div style="font-family:'Zen Antique Soft',serif;font-size:15px;letter-spacing:1px;margin-bottom:4px">${u.name}</div>
+        <div style="font-size:12px;color:var(--muted)">${u.company || '—'}</div>
+      </div>
+      <span class="badge ${u.role==='admin'?'badge-admin':'badge-approved'}">${u.role==='admin'?'管理者':'会員'}</span>
+    </div>`).join('');
+  showPage('directory');
 }
 
 // ── MODALS ──
