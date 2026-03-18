@@ -127,25 +127,25 @@ nav { display:flex; gap:8px; align-items:center; flex-shrink:0; }
 .locked-content p { color:var(--muted); font-size:14px; margin-bottom:24px; line-height:1.8; }
 .locked-actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
 
-.dashboard-layout { display:grid; grid-template-columns:220px 1fr; min-height:calc(100vh - 60px); }
-.sidebar { background:var(--surface); border-right:1px solid var(--border); padding:24px 0; }
-.sidebar-brand { padding:0 20px 20px; border-bottom:1px solid var(--border); margin-bottom:8px; }
-.sidebar-role { font-family:'Space Mono',monospace; font-size:10px; color:var(--accent2); letter-spacing:2px; margin-top:2px; }
-.sidebar-section { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; padding:16px 20px 6px; opacity:0.6; }
-.sidebar-nav a { display:flex; align-items:center; gap:9px; padding:10px 20px; color:var(--muted); font-size:13px; transition:all 0.18s; cursor:pointer; border-left:2px solid transparent; text-decoration:none; }
+.dashboard-layout { display:grid; grid-template-columns:180px 1fr; min-height:calc(100vh - 60px); }
+.sidebar { background:var(--surface); border-right:1px solid var(--border); padding:16px 0; overflow-y:auto; }
+.sidebar-brand { padding:0 14px 14px; border-bottom:1px solid var(--border); margin-bottom:4px; }
+.sidebar-role { font-family:'Space Mono',monospace; font-size:9px; color:var(--accent2); letter-spacing:2px; margin-top:2px; }
+.sidebar-section { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; padding:10px 14px 4px; opacity:0.6; }
+.sidebar-nav a { display:flex; align-items:center; gap:7px; padding:8px 14px; color:var(--muted); font-size:12px; transition:all 0.18s; cursor:pointer; border-left:2px solid transparent; text-decoration:none; white-space:nowrap; }
 .sidebar-nav a:hover { color:var(--text); background:rgba(255,255,255,0.03); }
 .sidebar-nav a.active { color:var(--accent); border-left-color:var(--accent); background:rgba(124,92,252,0.06); }
 
-.dash-main { background:var(--bg); padding:36px; overflow-y:auto; }
-.dash-title { font-family:'Zen Antique Soft',serif; font-size:24px; letter-spacing:3px; margin-bottom:4px; }
-.dash-subtitle { color:var(--muted); font-size:13px; margin-bottom:28px; font-family:'Space Mono',monospace; }
+.dash-main { background:var(--bg); padding:24px; overflow-y:auto; min-width:0; }
+.dash-title { font-family:'Zen Antique Soft',serif; font-size:22px; letter-spacing:2px; margin-bottom:4px; }
+.dash-subtitle { color:var(--muted); font-size:12px; margin-bottom:20px; font-family:'Space Mono',monospace; }
 
-.stats-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:14px; margin-bottom:32px; }
-.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:18px 20px; border-top:2px solid var(--accent); }
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:24px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px 16px; border-top:2px solid var(--accent); }
 .stat-card.red-top { border-top-color:var(--red); }
-.stat-value { font-family:'Space Mono',monospace; font-size:28px; color:var(--text); margin-bottom:4px; }
+.stat-value { font-family:'Space Mono',monospace; font-size:24px; color:var(--text); margin-bottom:4px; }
 .stat-value.red { color:var(--red); }
-.stat-label { font-size:11px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; font-family:'Space Mono',monospace; }
+.stat-label { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; font-family:'Space Mono',monospace; }
 
 .data-table { background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:28px; }
 .table-header { padding:14px 20px; border-bottom:1px solid var(--border); }
@@ -189,25 +189,31 @@ tr:hover td { background:rgba(124,92,252,0.04); }
 @media(max-width:768px) {
   .dashboard-layout { grid-template-columns:1fr; }
   .sidebar { display:none; }
-  header { padding:0 16px; }
-  .dash-main { padding:20px 16px; padding-bottom:90px; }
+  header { padding:0 12px; }
+  .dash-main { padding:16px 12px; padding-bottom:80px; }
+  .stats-row { grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:16px; }
+  .stat-value { font-size:20px; }
+  table { font-size:11px; }
+  th, td { padding:8px 10px; }
 }
 .mobile-nav {
   display:none;
   position:fixed; bottom:0; left:0; right:0; z-index:150;
   background:var(--surface); border-top:1px solid var(--border);
-  padding:8px 4px env(safe-area-inset-bottom, 12px);
-  overflow-x:auto; white-space:nowrap;
-  justify-content:space-around; align-items:center;
+  padding:6px 0 env(safe-area-inset-bottom, 8px);
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+  flex-direction:row; align-items:center;
+  scrollbar-width:none;
 }
+.mobile-nav::-webkit-scrollbar { display:none; }
 .mobile-nav-btn {
-  display:inline-flex; flex-direction:column; align-items:center; gap:3px;
-  padding:4px 8px; border:none; background:transparent; color:var(--muted);
+  display:inline-flex; flex-direction:column; align-items:center; gap:2px;
+  padding:3px 10px; border:none; background:transparent; color:var(--muted);
   font-size:9px; font-family:'Noto Sans JP',sans-serif; cursor:pointer;
-  border-radius:8px; transition:all 0.2s; min-width:48px;
+  border-radius:8px; transition:all 0.2s; min-width:52px; flex-shrink:0;
 }
 .mobile-nav-btn.active { color:var(--accent); background:rgba(124,92,252,0.1); }
-.mobile-nav-btn .mnav-icon { font-size:18px; line-height:1; }
+.mobile-nav-btn .mnav-icon { font-size:16px; line-height:1; }
 @media(max-width:768px) { .mobile-nav { display:flex; } }
 </style>
 </head>
@@ -314,6 +320,8 @@ tr:hover td { background:rgba(124,92,252,0.04); }
       <button class="mobile-nav-btn" onclick="showDashTab('requests')"><span class="mnav-icon">➕</span>追加 <span id="mobile-pending-badge" style="background:var(--red);color:#fff;border-radius:8px;padding:0 5px;font-size:9px;display:none"></span></button>
       <button class="mobile-nav-btn" onclick="showDashTab('members')"><span class="mnav-icon">👥</span>会員</button>
       <button class="mobile-nav-btn" onclick="showDashTab('mail')"><span class="mnav-icon">✉️</span>メール</button>
+      <button class="mobile-nav-btn" onclick="showProfilePage()"><span class="mnav-icon">⚙️</span>設定</button>
+      <button class="mobile-nav-btn" onclick="logout()"><span class="mnav-icon">🚪</span>ログアウト</button>
     </div>
     <main class="dash-main">
       <div id="dash-overview">
