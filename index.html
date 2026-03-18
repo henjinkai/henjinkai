@@ -714,15 +714,14 @@ on conflict (login_id) do nothing;</pre>
 
 <script>
 // ══════════════════════════════════════════════════════
-// SUPABASE CONFIG  ← ここに自分のURLとAnonKeyを入れる
+// SUPABASE CONFIG
 // ══════════════════════════════════════════════════════
-const SUPABASE_URL  = localStorage.getItem('henjinkai_sb_url')  || '';
-const SUPABASE_ANON = localStorage.getItem('henjinkai_sb_anon') || '';
+const SUPABASE_URL  = 'https://ltmsigtmtrkpoucvowmv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0bXNpZ3RtdHJrcG91Y3Zvd212Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjA0NDgsImV4cCI6MjA4OTM5NjQ0OH0.mDs0m1oZxBiwDN1N6PefY2Ci1-ENJlKfyetV9Y_Er-w';
 
 let sb = null; // Supabaseクライアント
 
 function initSupabase() {
-  if (!SUPABASE_URL || !SUPABASE_ANON) return false;
   try {
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
     return true;
