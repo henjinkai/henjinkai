@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>変人会 — 会員制ラウンジ</title>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Antique+Soft&family=Noto+Sans+JP:wght@300;400;500;700&family=Space+Mono:ital@0;1&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root {
   --bg: #0d0d0f;
@@ -234,8 +234,7 @@ tr:hover td { background:rgba(124,92,252,0.04); }
       <h1 class="hero-title">変人会</h1>
       <p class="hero-desc">業界も肩書きも関係ない。<br><strong>「変わってる」</strong>と言われ続けてきた人間が集まり、<br>知識・発見・狂気を静かに共有する場所。</p>
       <div class="hero-actions">
-        <button class="btn btn-accent" onclick="showModal('register-modal')">入会を申請する</button>
-        <button class="btn btn-ghost" onclick="showModal('login-modal')">ログイン</button>
+        <button class="btn btn-accent" onclick="showModal('login-modal')">ログイン</button>
       </div>
     </div>
   </div>
@@ -243,8 +242,8 @@ tr:hover td { background:rgba(124,92,252,0.04); }
     <div class="section-head"><span class="section-label">// public posts</span></div>
     <div class="article-grid" id="article-grid"></div>
     <div style="text-align:center;padding:48px 0;border-top:1px solid var(--border)">
-      <p style="color:var(--muted);font-size:14px;margin-bottom:20px">会員限定のコンテンツを読むには入会が必要です</p>
-      <button class="btn btn-accent" onclick="showModal('register-modal')">入会申請する</button>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:20px">会員限定のコンテンツを読むにはログインが必要です</p>
+      <button class="btn btn-accent" onclick="showModal('login-modal')">ログイン</button>
     </div>
   </div>
 </div>
@@ -279,8 +278,7 @@ tr:hover td { background:rgba(124,92,252,0.04); }
       <h3>会員限定コンテンツ</h3>
       <p>このポストの続きは変人会の会員のみ閲覧できます。<br>入会申請後、管理者の承認を経てアクセスできます。</p>
       <div class="locked-actions">
-        <button class="btn btn-accent" onclick="showModal('register-modal')">入会を申請する</button>
-        <button class="btn btn-outline" onclick="showModal('login-modal')">ログイン</button>
+        <button class="btn btn-accent" onclick="showModal('login-modal')">ログイン</button>
       </div>
     </div>
   </div>
@@ -299,11 +297,12 @@ tr:hover td { background:rgba(124,92,252,0.04); }
         <a onclick="showDashTab('overview')">📊 ダッシュボード</a>
         <a onclick="showDashTab('posts')">📄 投稿管理</a>
         <a onclick="showDashTab('new-post')">✏️ 新規投稿</a>
-        <a onclick="showDashTab('requests')">🕐 入会申請 <span id="pending-badge" style="background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px;display:none"></span></a>
+        <a onclick="showDashTab('requests')">➕ メンバー追加 <span id="pending-badge" style="background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px;display:none"></span></a>
         <a onclick="showDashTab('members')">👥 会員一覧</a>
         <a onclick="showDashTab('mail')">✉️ メール配信 </a>
         <div class="sidebar-section">アカウント</div>
         <a onclick="showProfilePage()">⚙️ プロフィール</a>
+        <a onclick="showPage('setup')">🔧 DB設定</a>
         <a onclick="logout()">🚪 ログアウト</a>
       </nav>
     </aside>
@@ -312,7 +311,7 @@ tr:hover td { background:rgba(124,92,252,0.04); }
       <button class="mobile-nav-btn active" onclick="showDashTab('overview')"><span class="mnav-icon">📊</span>ダッシュボード</button>
       <button class="mobile-nav-btn" onclick="showDashTab('posts')"><span class="mnav-icon">📄</span>投稿管理</button>
       <button class="mobile-nav-btn" onclick="showDashTab('new-post')"><span class="mnav-icon">✏️</span>新規投稿</button>
-      <button class="mobile-nav-btn" onclick="showDashTab('requests')"><span class="mnav-icon">🕐</span>申請 <span id="mobile-pending-badge" style="background:var(--red);color:#fff;border-radius:8px;padding:0 5px;font-size:9px;display:none"></span></button>
+      <button class="mobile-nav-btn" onclick="showDashTab('requests')"><span class="mnav-icon">➕</span>追加 <span id="mobile-pending-badge" style="background:var(--red);color:#fff;border-radius:8px;padding:0 5px;font-size:9px;display:none"></span></button>
       <button class="mobile-nav-btn" onclick="showDashTab('members')"><span class="mnav-icon">👥</span>会員</button>
       <button class="mobile-nav-btn" onclick="showDashTab('mail')"><span class="mnav-icon">✉️</span>メール</button>
     </div>
@@ -383,18 +382,27 @@ tr:hover td { background:rgba(124,92,252,0.04); }
         </div>
       </div>
       <div id="dash-requests" style="display:none">
-        <div class="dash-title">入会申請</div>
-        <div class="dash-subtitle">// 承認待ち・却下済みの申請</div>
-        <div class="data-table">
-          <table><thead><tr><th>名前</th><th>メール</th><th>申請日</th><th>ステータス</th><th>操作</th></tr></thead>
-          <tbody id="requests-tbody"></tbody></table>
+        <div class="dash-title">メンバー追加</div>
+        <div class="dash-subtitle">// 管理者がメンバーを直接追加します</div>
+        <div class="post-form" style="max-width:520px;margin-bottom:28px">
+          <h3>新規メンバーを追加</h3>
+          <div class="error-msg" id="add-member-error"></div>
+          <div class="form-group"><label>名前 <span style="color:var(--red)">*</span></label><input type="text" id="add-member-name" placeholder="山田 太郎"></div>
+          <div class="form-group"><label>所属会社・組織（任意）</label><input type="text" id="add-member-company" placeholder="株式会社〇〇 / フリーランス など"></div>
+          <div class="form-group"><label>メールアドレス（任意）</label><input type="email" id="add-member-email" placeholder="you@example.com"></div>
+          <div style="padding:10px 14px;background:rgba(124,92,252,0.08);border:1px solid rgba(124,92,252,0.2);border-radius:6px;font-size:12px;color:var(--muted);margin-bottom:16px;font-family:'Space Mono',monospace;line-height:1.9">
+            追加されたメンバーには初期ID・パスワードが設定されます<br>
+            初期ID: <span style="color:var(--accent)">hentai</span> &nbsp;/&nbsp; 初期パスワード: <span style="color:var(--accent)">dayone</span><br>
+            初回ログイン時に本人がID・パスワードを変更します
+          </div>
+          <button class="btn btn-green" onclick="adminAddMember()">➕ メンバーを追加する</button>
         </div>
       </div>
       <div id="dash-members" style="display:none">
         <div class="dash-title">会員一覧</div>
         <div class="dash-subtitle">// 承認済み会員のみ表示</div>
         <div class="data-table">
-          <table><thead><tr><th>名前</th><th>メール</th><th>権限</th><th>登録日</th><th>操作</th></tr></thead>
+          <table><thead><tr><th>名前 / ID</th><th>メール</th><th>権限 / 状態</th><th>登録日</th><th>操作</th></tr></thead>
           <tbody id="members-tbody"></tbody></table>
         </div>
       </div>
@@ -494,6 +502,52 @@ tr:hover td { background:rgba(124,92,252,0.04); }
   </div>
 </div>
 
+<!-- PAGE: FIRST LOGIN SETUP -->
+<div id="page-first-login" class="page">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg)">
+    <div style="width:100%;max-width:460px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <div style="height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2))"></div>
+        <!-- 警告バナー -->
+        <div style="background:rgba(240,192,64,0.1);border-bottom:1px solid rgba(240,192,64,0.25);padding:14px 24px;display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:20px;flex-shrink:0">⚠️</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--gold);margin-bottom:4px">初回ログイン — ID・パスワードの設定が必要です</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.7">
+              現在は初期ID・初期パスワードでログインしています。<br>
+              <strong style="color:var(--text)">ID・パスワードを変更するまで、サービスはご利用いただけません。</strong>
+            </div>
+          </div>
+        </div>
+        <div style="padding:28px">
+          <div style="font-family:'Zen Antique Soft',serif;font-size:18px;letter-spacing:2px;margin-bottom:4px">IDとパスワードを設定</div>
+          <div style="font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:24px">// 設定後にラウンジへ入室できます</div>
+          <div class="error-msg" id="fl-error" style="display:none"></div>
+          <div class="form-group">
+            <label>新しいID <span style="color:var(--red)">*</span></label>
+            <input type="text" id="fl-new-id" placeholder="半角英数字・記号（3文字以上）" autocomplete="username">
+            <div style="font-size:11px;color:var(--muted);margin-top:5px">初期ID（hentai）とは異なるIDを設定してください</div>
+          </div>
+          <div class="form-group">
+            <label>新しいパスワード <span style="color:var(--red)">*</span></label>
+            <input type="password" id="fl-new-pass" placeholder="6文字以上" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label>パスワードの確認 <span style="color:var(--red)">*</span></label>
+            <input type="password" id="fl-confirm-pass" placeholder="もう一度入力してください" autocomplete="new-password" onkeydown="if(event.key==='Enter')doFirstLoginSetup()">
+          </div>
+          <button class="btn btn-accent" style="width:100%;padding:13px;font-size:14px;margin-top:8px" onclick="doFirstLoginSetup()">
+            ✅ 設定して入室する
+          </button>
+          <div style="text-align:center;margin-top:16px">
+            <button class="btn btn-ghost btn-sm" onclick="logout()">ログアウトに戻る</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Login -->
 <div class="modal-overlay" id="login-modal" onclick="closeModal(event,'login-modal')">
   <div class="modal">
@@ -501,40 +555,22 @@ tr:hover td { background:rgba(124,92,252,0.04); }
     <div class="modal-header"><h2>ログイン</h2><p style="color:var(--muted);font-size:13px">変人会へようこそ</p></div>
     <div class="modal-body">
       <div class="error-msg" id="login-error"></div>
-      <div class="form-group"><label>メールアドレス</label><input type="email" id="login-email" placeholder="you@example.com"></div>
-      <div class="form-group"><label>パスワード</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="form-group"><label>ID</label><input type="text" id="login-email" placeholder="IDを入力" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="form-group"><label>パスワード</label><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <div class="form-actions">
         <button class="btn btn-ghost" onclick="hideModal('login-modal')">閉じる</button>
         <button class="btn btn-accent" onclick="doLogin()">ログイン</button>
       </div>
-      <div class="form-switch">アカウントをお持ちでない方は <a onclick="switchModal('login-modal','register-modal')">入会申請</a></div>
       <div style="margin-top:14px;padding:10px 12px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;line-height:1.9">
-        admin: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="4021242d292e0028252e2a292e2b21296e2a30">[email&#160;protected]</a> / admin123
+        管理者: admin / admin123
       </div>
     </div>
   </div>
 </div>
 
-<!-- MODAL: Register -->
-<div class="modal-overlay" id="register-modal" onclick="closeModal(event,'register-modal')">
-  <div class="modal">
-    <div class="modal-stripe"></div>
-    <div class="modal-header"><h2>入会申請</h2><p style="color:var(--muted);font-size:13px">管理者の承認後にログインできます</p></div>
-    <div class="modal-body">
-      <div class="error-msg" id="reg-error"></div>
-      <div class="success-msg" id="reg-success"></div>
-      <div class="form-group"><label>お名前</label><input type="text" id="reg-name" placeholder="山田 太郎"></div>
-      <div class="form-group"><label>所属会社・組織（任意）</label><input type="text" id="reg-company" placeholder="株式会社〇〇 / フリーランス など"></div>
-      <div class="form-group"><label>メールアドレス</label><input type="email" id="reg-email" placeholder="you@example.com"></div>
-      <div class="form-group"><label>パスワード（6文字以上）</label><input type="password" id="reg-pass" placeholder="••••••••"></div>
-      <div class="form-actions">
-        <button class="btn btn-ghost" onclick="hideModal('register-modal')">閉じる</button>
-        <button class="btn btn-accent" onclick="doRegister()">申請する</button>
-      </div>
-      <div class="form-switch">すでに会員の方は <a onclick="switchModal('register-modal','login-modal')">ログイン</a></div>
-    </div>
-  </div>
-</div>
+<!-- MODAL: Register (廃止 - 管理者が直接追加) -->
+<div id="reg-error" style="display:none"></div>
+<div id="reg-success" style="display:none"></div>
 
 <!-- MODAL: Admin Edit Member -->
 <div class="modal-overlay" id="edit-member-modal" onclick="closeModal(event,'edit-member-modal')">
@@ -562,9 +598,145 @@ tr:hover td { background:rgba(124,92,252,0.04); }
   </div>
 </div>
 
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay" style="display:none;position:fixed;inset:0;background:rgba(13,13,15,0.85);backdrop-filter:blur(6px);z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite"></div>
+  <div id="loading-msg" style="font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);letter-spacing:2px">読み込み中...</div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+<!-- PAGE: SUPABASE SETUP -->
+<div id="page-setup" class="page">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg)">
+    <div style="width:100%;max-width:520px">
+      <div style="text-align:center;margin-bottom:32px">
+        <div style="font-family:'Zen Antique Soft',serif;font-size:48px;color:var(--accent);letter-spacing:8px;text-shadow:0 0 30px rgba(124,92,252,0.4)">変人会</div>
+        <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:3px;margin-top:6px">// INITIAL SETUP</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <div style="height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2))"></div>
+        <div style="padding:28px">
+          <div style="font-family:'Zen Antique Soft',serif;font-size:18px;letter-spacing:2px;margin-bottom:6px">Supabase 接続設定</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:22px;line-height:1.8">
+            初回のみ設定が必要です。<a href="https://supabase.com" target="_blank" style="color:var(--accent)">supabase.com</a> でプロジェクトを作成し、<br>Project Settings → API からURLとAnon Keyを取得してください。
+          </div>
+          <div class="error-msg" id="setup-error" style="display:none"></div>
+          <div class="form-group">
+            <label>Project URL</label>
+            <input type="text" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co" style="font-family:'Space Mono',monospace;font-size:12px">
+          </div>
+          <div class="form-group">
+            <label>Anon (public) Key</label>
+            <input type="text" id="sb-anon" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." style="font-family:'Space Mono',monospace;font-size:12px">
+          </div>
+          <button class="btn btn-accent" style="width:100%;padding:13px;font-size:14px;margin-top:4px" onclick="saveSupabaseConfig()">
+            接続して開始する →
+          </button>
+
+          <!-- SQL セットアップガイド -->
+          <details style="margin-top:24px">
+            <summary style="cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:1px;user-select:none">▶ Supabase SQLセットアップ手順を見る</summary>
+            <div style="margin-top:14px;padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.8">
+                Supabase の <strong style="color:var(--text)">SQL Editor</strong> で以下を実行してください：
+              </div>
+              <pre id="setup-sql" style="font-size:10px;color:#aaa;line-height:1.7;overflow-x:auto;white-space:pre-wrap;word-break:break-all">-- 1. users テーブル
+create table if not exists users (
+  id         bigserial primary key,
+  name       text not null,
+  company    text default '',
+  email      text default '',
+  login_id   text not null unique,
+  pass       text not null,
+  role       text default 'member',
+  status     text default 'approved',
+  is_first_login boolean default true,
+  joined     text default ''
+);
+
+-- 2. articles テーブル
+create table if not exists articles (
+  id             bigserial primary key,
+  title          text not null,
+  category       text default 'その他',
+  type           text default 'free',
+  excerpt        text default '',
+  body           text default '',
+  date           text default '',
+  emoji          text default '💡',
+  show_reactions boolean default true,
+  attachments    jsonb default '[]'::jsonb
+);
+
+-- 3. reactions テーブル
+create table if not exists reactions (
+  article_id bigint,
+  user_id    bigint,
+  type       text,
+  primary key (article_id, user_id)
+);
+
+-- 4. Storage バケット (Storage タブで作成)
+-- バケット名: henjinkai  / Public: ON
+
+-- 5. RLS を無効化（シンプル運用の場合）
+alter table users    disable row level security;
+alter table articles disable row level security;
+alter table reactions disable row level security;
+
+-- 6. 管理者アカウント初期データ
+insert into users (name, company, email, login_id, pass, role, status, is_first_login, joined)
+values ('管理者', '変人会', 'admin@henjinkai.jp', 'admin', 'admin123', 'admin', 'approved', false, '2024-01-01')
+on conflict (login_id) do nothing;</pre>
+              <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="navigator.clipboard.writeText(document.getElementById('setup-sql').textContent).then(()=>toast('✅ SQLをコピーしました'))">📋 SQLをコピー</button>
+            </div>
+          </details>
+
+          <!-- 設定リセット -->
+          <div style="margin-top:16px;text-align:center">
+            <button class="btn btn-ghost btn-sm" onclick="if(confirm('接続設定をリセットしますか？')){localStorage.removeItem('henjinkai_sb_url');localStorage.removeItem('henjinkai_sb_anon');location.reload()}">接続設定をリセット</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
+// ══════════════════════════════════════════════════════
+// SUPABASE CONFIG  ← ここに自分のURLとAnonKeyを入れる
+// ══════════════════════════════════════════════════════
+const SUPABASE_URL  = localStorage.getItem('henjinkai_sb_url')  || '';
+const SUPABASE_ANON = localStorage.getItem('henjinkai_sb_anon') || '';
+
+let sb = null; // Supabaseクライアント
+
+function initSupabase() {
+  if (!SUPABASE_URL || !SUPABASE_ANON) return false;
+  try {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    return true;
+  } catch(e) { return false; }
+}
+
+// ── 設定画面 ──────────────────────────────────────────
+function saveSupabaseConfig() {
+  const url  = document.getElementById('sb-url').value.trim();
+  const anon = document.getElementById('sb-anon').value.trim();
+  if (!url || !anon) { showSetupError('URLとAnon Keyを両方入力してください'); return; }
+  if (!url.startsWith('https://')) { showSetupError('URLは https:// で始まる必要があります'); return; }
+  localStorage.setItem('henjinkai_sb_url',  url);
+  localStorage.setItem('henjinkai_sb_anon', anon);
+  location.reload();
+}
+function showSetupError(msg) {
+  const el = document.getElementById('setup-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+// ── CARD COLORS ──
 const CARD_COLORS = {
   'テクノロジー':'linear-gradient(135deg,#1a1a2e,#16213e)',
   'ビジネス':'linear-gradient(135deg,#1a1a1a,#2d1b2e)',
@@ -574,175 +746,193 @@ const CARD_COLORS = {
   'その他':'linear-gradient(135deg,#1a1a1f,#0d0d12)',
 };
 
-// ── DEFAULT DATA ──
-const DEFAULT_USERS = [
-  { id:1, name:'管理者', company:'変人会', email:'admin@henjinkai.jp', pass:'admin123', role:'admin', status:'approved', joined:'2024-01-01' },
-  { id:2, name:'田中 美咲', company:'株式会社サンプル', email:'user@example.com', pass:'pass123', role:'member', status:'approved', joined:'2024-03-15' },
-  { id:3, name:'鈴木 健太', company:'フリーランス', email:'pending@example.com', pass:'pass456', role:'member', status:'pending', joined:'2025-02-20' }
-];
+const INITIAL_ID   = 'hentai';
+const INITIAL_PASS = 'dayone';
+const LS_SESSION   = 'henjinkai_session';
 
-const DEFAULT_ARTICLES = [
-  { id:1, title:'「普通」とは何か——異端者の生存戦略', category:'哲学', type:'free', excerpt:'社会に「おかしい」と言われ続けた人間が、それでも生き延びてきた方法を考える。', body:'<p>「変わってるね」という言葉を、褒め言葉として受け取れるようになったのはいつからだろう。</p><p>子どもの頃、その言葉は刃だった。集団から外れることへの恐怖と、でも自分を曲げることへの嫌悪感の間で、ずっと揺れていた。</p><h3>異端であることのコスト</h3><p>変人であることには確かにコストがある。組織に馴染めない。会話が噛み合わない。「なぜそこまで考えるの」と言われる。しかし同時に、変人であることにしか得られないものもある。それは深さだ。</p>', date:'2025-01-10', emoji:'🦚' },
-  { id:2, title:'深夜3時の発見——睡眠不足と創造性の関係', category:'科学', type:'member', excerpt:'疲弊した脳が検閲を外したとき、人間は何を思いつくのか。神経科学からの考察。', body:'<p>眠れない夜に限って、奇妙なアイデアが湧いてくる。これは気のせいではないかもしれない。</p><p>前頭前皮質——論理・倫理・社会規範を担う脳の「上司」——は疲れると機能が低下する。そのとき、普段は抑圧されているアイデアが浮上してくる。</p><h3>デフォルトモードネットワーク</h3><p>何も考えていないときに活性化する「デフォルトモードネットワーク」は、創造性の源泉とされている。睡眠不足や疲労はこのネットワークを特殊な状態に置き、通常の思考回路とは異なる接続を生む。</p>', date:'2025-01-18', emoji:'🌙' },
-  { id:3, title:'趣味と仕事の境界線が溶けるとき', category:'ビジネス', type:'free', excerpt:'「好きなことで生きる」の罠と、それでも踏み込む理由。', body:'<p>好きなことを仕事にすると嫌いになる——よく聞く言葉だ。半分は本当だと思う。</p><p>趣味には締め切りがない。品質基準は自分だけが決める。失敗しても誰も傷つかない。仕事はその逆だ。でも、だからこそ成長する部分もある。</p><h3>最適解は「好きなことに隣接した仕事」かもしれない</h3><p>音楽が好きなら音楽家より音響エンジニアの方が長続きするかもしれない。料理が好きなら料理人より食品開発の方が合うかもしれない。</p>', date:'2025-01-25', emoji:'⚗️' },
-  { id:4, title:'情報密度——なぜ一部の人は同じ本から10倍学ぶのか', category:'テクノロジー', type:'member', excerpt:'読む量ではなく、抽出する密度の問題。認知科学から見た学習の非対称性。', body:'<p>同じ本を読んで、ある人は「面白かった」で終わり、別の人は思考体系を再構築する。この差はどこから来るのか。</p><p>それは「引っかかり」の数だと思う。既存知識との接続点が多い人ほど、新しい情報から得られるものが多い。</p><h3>スキーマの構築</h3><p>認知科学でいう「スキーマ」——知識の枠組み——が豊かなほど、新情報の定着が速い。だから最初の100冊は遅くても、1000冊目は加速する。</p>', date:'2025-02-05', emoji:'🧩' },
-  { id:5, title:'孤独の設計——一人でいることを技術として扱う', category:'哲学', type:'free', excerpt:'孤独は欠如ではなく、整備すべき空間だ。変人のための孤独論。', body:'<p>変人は往々にして一人でいる時間が長い。望んでそうしている人もいれば、結果としてそうなっている人もいる。</p><p>孤独の最大の問題は「暇」ではなく「反芻」だ。同じ思考がループする。批判的な内なる声が増幅される。</p><h3>意図的な孤独vs偶発的な孤独</h3><p>自分で選んだ孤独は創造の源泉になる。押しつけられた孤独は毒になる。同じ状況でも、意味づけと設計次第で全く別の体験になる。</p>', date:'2025-02-12', emoji:'🌌' },
-  { id:6, title:'「なぜ」を5回繰り返す人間の末路', category:'その他', type:'member', excerpt:'根本原因を追い続ける人間がたどり着く、奇妙で豊かな場所について。', body:'<p>「なぜ」を5回繰り返すとトヨタの問題解決になる。でも日常生活で5回繰り返すと、ちょっと面倒な人間になる。</p><p>なぜ人は働くのか。なぜ社会はこの形なのか。なぜ自分はここにいるのか。こういう問いを止められない人間が変人になる。</p><h3>問い続けることの副作用</h3><p>「なぜ」を繰り返す人間には副作用がある。単純に楽しめなくなる瞬間がある。映画を見ながら構造分析が始まる。でもその代わり、世界が立体的に見える。</p>', date:'2025-02-20', emoji:'🔍' },
-];
+let store = { currentUser: null, prevPage: 'home', articles: [], users: [] };
 
-// ── LOCALSTORAGE PERSISTENCE ──
-const LS_USERS = 'henjinkai_users';
-const LS_ARTICLES = 'henjinkai_articles';
-const LS_SESSION = 'henjinkai_session';
-const LS_REACTIONS = 'henjinkai_reactions';
-
-function loadStore() {
-  try {
-    const users = JSON.parse(localStorage.getItem(LS_USERS));
-    const articles = JSON.parse(localStorage.getItem(LS_ARTICLES));
-    return {
-      users: users || JSON.parse(JSON.stringify(DEFAULT_USERS)),
-      articles: articles || JSON.parse(JSON.stringify(DEFAULT_ARTICLES)),
-      currentUser: null,
-      prevPage: 'home'
-    };
-  } catch(e) {
-    return {
-      users: JSON.parse(JSON.stringify(DEFAULT_USERS)),
-      articles: JSON.parse(JSON.stringify(DEFAULT_ARTICLES)),
-      currentUser: null,
-      prevPage: 'home'
-    };
+// ── DB HELPERS ──────────────────────────────────────────
+async function dbGetUsers() {
+  const { data, error } = await sb.from('users').select('*').order('joined', { ascending: true });
+  if (error) throw error;
+  return data;
+}
+async function dbGetArticles() {
+  const { data, error } = await sb.from('articles').select('*').order('date', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+async function dbUpsertUser(u) {
+  const { error } = await sb.from('users').upsert(u, { onConflict: 'id' });
+  if (error) throw error;
+}
+async function dbInsertUser(u) {
+  const { data, error } = await sb.from('users').insert(u).select().single();
+  if (error) throw error;
+  return data;
+}
+async function dbDeleteUser(id) {
+  const { error } = await sb.from('users').delete().eq('id', id);
+  if (error) throw error;
+}
+async function dbInsertArticle(a) {
+  const { data, error } = await sb.from('articles').insert(a).select().single();
+  if (error) throw error;
+  return data;
+}
+async function dbDeleteArticle(id) {
+  const { error } = await sb.from('articles').delete().eq('id', id);
+  if (error) throw error;
+}
+async function dbGetReactions(articleId) {
+  const { data, error } = await sb.from('reactions').select('*').eq('article_id', articleId);
+  if (error) return [];
+  return data;
+}
+async function dbUpsertReaction(articleId, userId, type) {
+  if (!type) {
+    await sb.from('reactions').delete().eq('article_id', articleId).eq('user_id', userId);
+  } else {
+    await sb.from('reactions').upsert({ article_id: articleId, user_id: userId, type }, { onConflict: 'article_id,user_id' });
   }
 }
 
-function saveUsers() {
-  localStorage.setItem(LS_USERS, JSON.stringify(store.users));
+// ── LOADING STATE ──
+function showLoading(msg='読み込み中...') {
+  document.getElementById('loading-overlay').style.display = 'flex';
+  document.getElementById('loading-msg').textContent = msg;
 }
-function saveArticles() {
-  localStorage.setItem(LS_ARTICLES, JSON.stringify(store.articles));
+function hideLoading() {
+  document.getElementById('loading-overlay').style.display = 'none';
 }
 
-let store = loadStore();
-
-// セッション復元（リロード後も維持）
-function restoreSession() {
+// ── SESSION ──
+async function restoreSession() {
+  const sessionId = localStorage.getItem(LS_SESSION);
+  if (!sessionId) return false;
+  showLoading('セッションを復元中...');
   try {
-    const sessionId = parseInt(localStorage.getItem(LS_SESSION));
-    if (sessionId) {
-      const user = store.users.find(u => u.id === sessionId && u.status === 'approved');
-      if (user) {
-        store.currentUser = user;
-        updateNav();
-        if (user.role === 'admin') { renderAdminDashboard(); showPage('admin'); }
-        else { renderMemberHome(); showPage('member'); }
-        return true;
-      }
+    const { data: user } = await sb.from('users').select('*').eq('id', sessionId).eq('status','approved').single();
+    if (user) {
+      store.currentUser = user;
+      updateNav();
+      hideLoading();
+      if (user.is_first_login) { showPage('first-login'); return true; }
+      if (user.role === 'admin') { await renderAdminDashboard(); showPage('admin'); }
+      else { await renderMemberHome(); showPage('member'); }
+      return true;
     }
   } catch(e) {}
+  localStorage.removeItem(LS_SESSION);
+  hideLoading();
   return false;
 }
 
 // ── NAVIGATION ──
-function showPage(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); window.scrollTo(0,0); }
-function goHome() {
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+async function goHome() {
   if (!store.currentUser) showPage('home');
-  else if (store.currentUser.role==='admin') { renderAdminDashboard(); showPage('admin'); }
-  else { renderMemberHome(); showPage('member'); }
+  else if (store.currentUser.is_first_login) showPage('first-login');
+  else if (store.currentUser.role==='admin') { await renderAdminDashboard(); showPage('admin'); }
+  else { await renderMemberHome(); showPage('member'); }
 }
 function goBack() { showPage(store.prevPage); }
 
 // ── AUTH ──
-function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const pass = document.getElementById('login-pass').value;
-  const user = store.users.find(u=>u.email===email && u.pass===pass);
-  if (!user) { showError('login-error','メールアドレスまたはパスワードが正しくありません'); return; }
-  if (user.status==='pending') { showError('login-error','⏳ 申請はただいま審査中です。管理者の承認をお待ちください。'); return; }
-  if (user.status==='rejected') { showError('login-error','❌ 申し訳ありませんが、入会申請が承認されませんでした。'); return; }
-  store.currentUser = user;
-  localStorage.setItem(LS_SESSION, user.id);
-  hideModal('login-modal');
-  updateNav();
-  toast('ようこそ、'+user.name+'さん');
-  if (user.role==='admin') { renderAdminDashboard(); showPage('admin'); }
-  else { renderMemberHome(); showPage('member'); }
+async function doLogin() {
+  const loginId = document.getElementById('login-email').value.trim();
+  const pass    = document.getElementById('login-pass').value;
+  if (!loginId || !pass) { showError('login-error','IDとパスワードを入力してください'); return; }
+  showLoading('ログイン中...');
+  try {
+    const { data: users } = await sb.from('users').select('*').eq('login_id', loginId).eq('pass', pass).eq('status','approved');
+    hideLoading();
+    if (!users || users.length === 0) { showError('login-error','IDまたはパスワードが正しくありません'); return; }
+    const user = users[0];
+    store.currentUser = user;
+    localStorage.setItem(LS_SESSION, user.id);
+    hideModal('login-modal');
+    updateNav();
+    if (user.is_first_login) { showPage('first-login'); return; }
+    toast('ようこそ、'+user.name+'さん');
+    if (user.role==='admin') { await renderAdminDashboard(); showPage('admin'); }
+    else { await renderMemberHome(); showPage('member'); }
+  } catch(e) {
+    hideLoading();
+    showError('login-error','ログインエラー: '+e.message);
+  }
 }
 
-function doRegister() {
-  const name = document.getElementById('reg-name').value.trim();
-  const company = document.getElementById('reg-company').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const pass = document.getElementById('reg-pass').value;
-  if (!name||!email||!pass) { showError('reg-error','名前・メール・パスワードを入力してください'); return; }
-  if (pass.length<6) { showError('reg-error','パスワードは6文字以上にしてください'); return; }
-  if (store.users.find(u=>u.email===email)) { showError('reg-error','このメールアドレスはすでに登録されています'); return; }
-  const newUser = { id:Date.now(), name, company:company||'', email, pass, role:'member', status:'pending', joined:new Date().toISOString().slice(0,10) };
-  store.users.push(newUser);
-  saveUsers();
-  document.getElementById('reg-error').style.display='none';
-  const s=document.getElementById('reg-success'); s.textContent='✅ 申請を受け付けました。管理者の承認後にログインできます。'; s.style.display='block';
-  ['reg-name','reg-company','reg-email','reg-pass'].forEach(id=>document.getElementById(id).value='');
-  updatePendingBadge();
+async function doFirstLoginSetup() {
+  const newId   = document.getElementById('fl-new-id').value.trim();
+  const newPass = document.getElementById('fl-new-pass').value;
+  const conf    = document.getElementById('fl-confirm-pass').value;
+  const errEl   = document.getElementById('fl-error');
+  errEl.style.display='none';
+  if (!newId || newId.length < 3) { errEl.textContent='IDは3文字以上で入力してください'; errEl.style.display='block'; return; }
+  if (newId === INITIAL_ID) { errEl.textContent='初期IDとは異なるIDを設定してください'; errEl.style.display='block'; return; }
+  if (!newPass || newPass.length < 6) { errEl.textContent='パスワードは6文字以上で入力してください'; errEl.style.display='block'; return; }
+  if (newPass === INITIAL_PASS) { errEl.textContent='初期パスワードとは異なるパスワードを設定してください'; errEl.style.display='block'; return; }
+  if (newPass !== conf) { errEl.textContent='パスワードが一致しません'; errEl.style.display='block'; return; }
+  // ID重複チェック
+  const { data: dup } = await sb.from('users').select('id').eq('login_id', newId).neq('id', store.currentUser.id);
+  if (dup && dup.length > 0) { errEl.textContent='そのIDはすでに使用されています'; errEl.style.display='block'; return; }
+  showLoading('設定を保存中...');
+  try {
+    await dbUpsertUser({ ...store.currentUser, login_id: newId, pass: newPass, is_first_login: false });
+    store.currentUser = { ...store.currentUser, login_id: newId, pass: newPass, is_first_login: false };
+    hideLoading();
+    updateNav();
+    toast('✅ ID・パスワードを設定しました。ようこそ、'+store.currentUser.name+'さん！');
+    if (store.currentUser.role==='admin') { await renderAdminDashboard(); showPage('admin'); }
+    else { await renderMemberHome(); showPage('member'); }
+  } catch(e) { hideLoading(); errEl.textContent='保存エラー: '+e.message; errEl.style.display='block'; }
 }
 
 function logout() {
-  store.currentUser=null;
+  store.currentUser = null;
   localStorage.removeItem(LS_SESSION);
+  store.articles = []; store.users = [];
   updateNav();
   showPage('home');
+  renderHome();
   toast('ログアウトしました');
 }
 
 function updateNav() {
   const nav = document.getElementById('nav-area');
   if (!store.currentUser) {
-    nav.innerHTML=`<button class="btn btn-ghost" onclick="showModal('login-modal')">ログイン</button><button class="btn btn-accent" onclick="showModal('register-modal')">入会申請</button>`;
+    nav.innerHTML=`<button class="btn btn-accent" onclick="showModal('login-modal')">ログイン</button>`;
   } else if (store.currentUser.role==='admin') {
-    nav.innerHTML=`<button class="btn btn-ghost" onclick="renderAdminDashboard();showPage('admin')">管理画面</button><button class="btn btn-accent" onclick="showProfilePage()">👤 ${store.currentUser.name}</button>`;
+    nav.innerHTML=`<button class="btn btn-ghost" onclick="renderAdminDashboard().then(()=>showPage('admin'))">管理画面</button><button class="btn btn-accent" onclick="showProfilePage()">👤 ${store.currentUser.name}</button>`;
   } else {
-    nav.innerHTML=`<button class="btn btn-ghost" onclick="renderMemberHome();showPage('member')">ラウンジへ</button><button class="btn btn-accent" onclick="showProfilePage()">👤 ${store.currentUser.name}</button>`;
+    nav.innerHTML=`<button class="btn btn-ghost" onclick="renderMemberHome().then(()=>showPage('member'))">ラウンジへ</button><button class="btn btn-accent" onclick="showProfilePage()">👤 ${store.currentUser.name}</button>`;
   }
 }
 
-// ── CARDS ──
-function getReactions() {
-  try { return JSON.parse(localStorage.getItem(LS_REACTIONS)) || {}; } catch(e) { return {}; }
-}
-function saveReactions(r) { localStorage.setItem(LS_REACTIONS, JSON.stringify(r)); }
-
-function getMyReaction(articleId) {
-  if (!store.currentUser) return null;
-  const r = getReactions();
-  const key = `${articleId}`;
-  if (!r[key]) return null;
-  return r[key][store.currentUser.id] || null;
-}
-function getReactionCounts(articleId) {
-  const r = getReactions();
-  const key = `${articleId}`;
-  const votes = r[key] || {};
-  const counts = { maru:0, sanka:0, batu:0 };
-  Object.values(votes).forEach(v => { if (counts[v] !== undefined) counts[v]++; });
-  return counts;
-}
-function toggleReaction(articleId, type, event) {
+// ── REACTIONS ──────────────────────────────────────────
+async function toggleReaction(articleId, type, event) {
   event.stopPropagation();
   if (!store.currentUser) return;
-  const r = getReactions();
-  const key = `${articleId}`;
-  if (!r[key]) r[key] = {};
-  // 同じボタンを押したらキャンセル
-  if (r[key][store.currentUser.id] === type) delete r[key][store.currentUser.id];
-  else r[key][store.currentUser.id] = type;
-  saveReactions(r);
-  // カードのリアクションバーだけ再描画
+  const { data: existing } = await sb.from('reactions').select('type').eq('article_id', articleId).eq('user_id', store.currentUser.id).single().catch(()=>({data:null}));
+  const newType = (existing && existing.type === type) ? null : type;
+  await dbUpsertReaction(articleId, store.currentUser.id, newType);
   const bar = document.getElementById(`reaction-bar-${articleId}`);
-  if (bar) bar.outerHTML = buildReactionBar(articleId);
+  if (bar) {
+    const html = await buildReactionBar(articleId);
+    bar.outerHTML = html;
+  }
 }
-function buildReactionBar(articleId) {
-  const counts = getReactionCounts(articleId);
-  const mine = getMyReaction(articleId);
+async function buildReactionBar(articleId) {
+  const reactions = await dbGetReactions(articleId);
+  const counts = { maru:0, sanka:0, batu:0 };
+  reactions.forEach(r => { if (counts[r.type] !== undefined) counts[r.type]++; });
+  const mine = store.currentUser ? (reactions.find(r=>r.user_id===store.currentUser.id)?.type || null) : null;
   return `<div class="reaction-bar" id="reaction-bar-${articleId}">
     <button class="reaction-btn ${mine==='maru'?'active-maru':''}" onclick="toggleReaction(${articleId},'maru',event)">⭕ <span class="reaction-count">${counts.maru||''}</span></button>
     <button class="reaction-btn ${mine==='sanka'?'active-sanka':''}" onclick="toggleReaction(${articleId},'sanka',event)"><span style="font-size:1em;line-height:1;font-family:sans-serif">△</span> <span class="reaction-count">${counts.sanka||''}</span></button>
@@ -750,11 +940,12 @@ function buildReactionBar(articleId) {
   </div>`;
 }
 
-function articleCard(a, isMember) {
+// ── ARTICLE CARDS ──────────────────────────────────────
+function articleCardSync(a, isMember, reactionHtml) {
   const locked = a.type==='member' && !isMember;
   const isAdmin = store.currentUser && store.currentUser.role==='admin';
   const bg = CARD_COLORS[a.category]||CARD_COLORS['その他'];
-  const showReactions = isMember && !locked && (a.showReactions !== false);
+  const showReactions = isMember && !locked && (a.show_reactions !== false);
   return `<div class="article-card" onclick="openArticle(${a.id})">
     ${isAdmin?`<button class="card-admin-del" onclick="event.stopPropagation();deleteArticle(${a.id})" title="削除（管理者）">✕</button>`:''}
     <div class="card-top" style="background:${bg}"><span>${a.emoji}</span>${locked?'<div class="card-lock">🔒</div>':''}</div>
@@ -770,24 +961,51 @@ function articleCard(a, isMember) {
       <span class="card-footer-meta">${a.date}</span>
       <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openArticle(${a.id})">読む →</button>
     </div>
-    ${showReactions ? buildReactionBar(a.id) : ''}
+    ${showReactions ? (reactionHtml||'') : ''}
   </div>`;
 }
 
-function renderHome() {
-  const free = store.articles.filter(a=>a.type==='free');
-  document.getElementById('article-grid').innerHTML = free.length ? free.map(a=>articleCard(a,false)).join('') : '<div class="empty-state"><div class="empty-icon">📭</div><p>公開中の投稿はありません</p></div>';
-}
-function renderMemberHome() {
-  document.getElementById('member-article-grid').innerHTML = store.articles.map(a=>articleCard(a,true)).join('');
-  document.getElementById('member-greeting').textContent = store.currentUser.name+' // logged in';
+async function renderHome() {
+  showLoading('記事を読み込み中...');
+  try {
+    const articles = await dbGetArticles();
+    store.articles = articles;
+    hideLoading();
+    const free = articles.filter(a=>a.type==='free');
+    const grid = document.getElementById('article-grid');
+    if (!free.length) { grid.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div><p>公開中の投稿はありません</p></div>'; return; }
+    grid.innerHTML = free.map(a=>articleCardSync(a,false,'')).join('');
+  } catch(e) { hideLoading(); console.error(e); }
 }
 
-// ── READER ──
-function openArticle(id) {
-  const a = store.articles.find(x=>x.id===id); if (!a) return;
+async function renderMemberHome() {
+  showLoading('記事を読み込み中...');
+  try {
+    const articles = await dbGetArticles();
+    store.articles = articles;
+    const grid = document.getElementById('member-article-grid');
+    const cards = await Promise.all(articles.map(async a => {
+      const rxHtml = await buildReactionBar(a.id);
+      return articleCardSync(a, true, rxHtml);
+    }));
+    hideLoading();
+    grid.innerHTML = cards.join('');
+    document.getElementById('member-greeting').textContent = store.currentUser.name+' // logged in';
+  } catch(e) { hideLoading(); console.error(e); }
+}
+
+// ── READER ──────────────────────────────────────────────
+async function openArticle(id) {
+  if (!store.currentUser) { showModal('login-modal'); return; }
+  if (store.currentUser.is_first_login) { showPage('first-login'); return; }
+  let a = store.articles.find(x=>x.id===id);
+  if (!a) {
+    const { data } = await sb.from('articles').select('*').eq('id',id).single();
+    a = data;
+  }
+  if (!a) return;
   const u = store.currentUser;
-  store.prevPage = u ? (u.role==='admin'?'admin':'member') : 'home';
+  store.prevPage = u.role==='admin'?'admin':'member';
   document.getElementById('reader-badge').innerHTML=`<span class="badge ${a.type==='member'?'badge-member':'badge-free'}" style="margin-bottom:12px">${a.type==='member'?'会員限定':'公開'}</span>`;
   document.getElementById('reader-title').textContent=a.title;
   document.getElementById('reader-meta').innerHTML=`<span>${a.emoji} ${a.category}</span><span>// ${a.date}</span>`;
@@ -805,7 +1023,7 @@ function openArticle(id) {
   showPage('article');
 }
 
-// ── ADMIN ──
+// ── ADMIN ──────────────────────────────────────────────
 function showDashTab(tab) {
   ['overview','posts','new-post','requests','members','mail'].forEach(t=>{
     document.getElementById('dash-'+t).style.display=t===tab?'block':'none';
@@ -822,83 +1040,133 @@ function showDashTab(tab) {
   if (tab==='mail') renderMailTab();
 }
 
-function renderAdminDashboard() {
-  document.getElementById('dash-date').textContent='// '+new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
-  document.getElementById('stats-row').innerHTML=`
-    <div class="stat-card"><div class="stat-value">${store.articles.length}</div><div class="stat-label">総投稿数</div></div>
-    <div class="stat-card"><div class="stat-value">${store.articles.filter(a=>a.type==='member').length}</div><div class="stat-label">会員限定</div></div>
-    <div class="stat-card"><div class="stat-value">${store.users.filter(u=>u.role==='member'&&u.status==='approved').length}</div><div class="stat-label">承認済み会員</div></div>
-    <div class="stat-card red-top"><div class="stat-value red">${store.users.filter(u=>u.status==='pending').length}</div><div class="stat-label">承認待ち</div></div>`;
-  document.getElementById('dash-articles-tbody').innerHTML=store.articles.slice(0,5).map(a=>`<tr>
-    <td style="font-weight:500">${a.title.substring(0,28)}${a.title.length>28?'…':''}</td>
-    <td style="color:var(--muted);font-size:12px">${a.category}</td>
-    <td><span class="badge ${a.type==='member'?'badge-member':'badge-free'}">${a.type==='member'?'限定':'公開'}</span></td>
-    <td><button class="btn btn-outline btn-sm" onclick="openArticle(${a.id})">表示</button></td>
-  </tr>`).join('');
-  showDashTab('overview');
-  updatePendingBadge();
+async function renderAdminDashboard() {
+  showLoading('ダッシュボードを読み込み中...');
+  try {
+    const [articles, users] = await Promise.all([dbGetArticles(), dbGetUsers()]);
+    store.articles = articles; store.users = users;
+    hideLoading();
+    document.getElementById('dash-date').textContent='// '+new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('stats-row').innerHTML=`
+      <div class="stat-card"><div class="stat-value">${articles.length}</div><div class="stat-label">総投稿数</div></div>
+      <div class="stat-card"><div class="stat-value">${articles.filter(a=>a.type==='member').length}</div><div class="stat-label">会員限定</div></div>
+      <div class="stat-card"><div class="stat-value">${users.filter(u=>u.role==='member'&&u.status==='approved').length}</div><div class="stat-label">承認済み会員</div></div>
+      <div class="stat-card red-top"><div class="stat-value red">${users.filter(u=>u.is_first_login).length}</div><div class="stat-label">初回未設定</div></div>`;
+    document.getElementById('dash-articles-tbody').innerHTML=articles.slice(0,5).map(a=>`<tr>
+      <td style="font-weight:500">${a.title.substring(0,28)}${a.title.length>28?'…':''}</td>
+      <td style="color:var(--muted);font-size:12px">${a.category}</td>
+      <td><span class="badge ${a.type==='member'?'badge-member':'badge-free'}">${a.type==='member'?'限定':'公開'}</span></td>
+      <td><button class="btn btn-outline btn-sm" onclick="openArticle(${a.id})">表示</button></td>
+    </tr>`).join('');
+    showDashTab('overview');
+  } catch(e) { hideLoading(); toast('⚠️ 読み込みエラー: '+e.message); }
 }
 
-function renderPostsTable() {
-  document.getElementById('posts-tbody').innerHTML=store.articles.map(a=>{
-    const c = getReactionCounts(a.id);
-    return `<tr>
+async function renderPostsTable() {
+  const articles = store.articles.length ? store.articles : await dbGetArticles();
+  document.getElementById('posts-tbody').innerHTML = articles.map(a=>`<tr>
     <td style="font-weight:500">${a.title.substring(0,26)}${a.title.length>26?'…':''}</td>
     <td style="color:var(--muted);font-size:12px">${a.category}</td>
     <td><span class="badge ${a.type==='member'?'badge-member':'badge-free'}">${a.type==='member'?'限定':'公開'}</span></td>
     <td style="color:var(--muted);font-family:'Space Mono',monospace;font-size:11px">${a.date}</td>
-    <td style="font-family:'Space Mono',monospace;font-size:12px;white-space:nowrap">
-      <span style="color:#3ddc97">⭕${c.maru}</span>&nbsp;
-      <span style="color:#f0c040">△${c.sanka}</span>&nbsp;
-      <span style="color:#fc5c5c">✖️${c.batu}</span>
-    </td>
-    <td style="display:flex;gap:6px">
-      <button class="btn btn-outline btn-sm" onclick="openArticle(${a.id})">表示</button>
-      <button class="btn btn-danger btn-sm" onclick="deleteArticle(${a.id})">削除</button>
-    </td>
-  </tr>`;
-  }).join('');
-}
-
-function renderRequestsTable() {
-  const list=store.users.filter(u=>u.status==='pending'||u.status==='rejected');
-  const tbody=document.getElementById('requests-tbody');
-  if (!list.length) { tbody.innerHTML='<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✅</div><p>承認待ちの申請はありません</p></div></td></tr>'; return; }
-  tbody.innerHTML=list.map(u=>`<tr>
-    <td style="font-weight:500">${u.name}</td>
-    <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">${u.email}</td>
-    <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">${u.joined}</td>
-    <td><span class="badge ${u.status==='pending'?'badge-pending':'badge-rejected'}">${u.status==='pending'?'審査中':'却下済'}</span></td>
-    <td style="display:flex;gap:6px;flex-wrap:wrap">
-      ${u.status==='pending'?`<button class="btn btn-green btn-sm" onclick="approveUser(${u.id})">✓ 承認</button>`:''}
-      ${u.status==='pending'?`<button class="btn btn-danger btn-sm" onclick="rejectUser(${u.id})">✗ 却下</button>`:''}
-      ${u.status==='rejected'?`<button class="btn btn-green btn-sm" onclick="approveUser(${u.id})">↩ 承認</button>`:''}
-      <button class="btn btn-ghost btn-sm" onclick="deleteMember(${u.id})">削除</button>
-    </td>
+    <td><button class="btn btn-outline btn-sm" onclick="openArticle(${a.id})">表示</button> <button class="btn btn-danger btn-sm" onclick="deleteArticle(${a.id})">削除</button></td>
   </tr>`).join('');
 }
 
-function renderMembersTable() {
-  const approved=store.users.filter(u=>u.status==='approved');
+function renderRequestsTable() {
+  const tbody = document.getElementById('requests-tbody');
+  tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">ℹ️</div><p>入会申請機能は廃止されました。<br>メンバーの追加は「メンバー追加」タブから行ってください。</p></div></td></tr>';
+}
+
+async function adminAddMember() {
+  const name    = document.getElementById('add-member-name').value.trim();
+  const company = document.getElementById('add-member-company').value.trim();
+  const email   = document.getElementById('add-member-email').value.trim();
+  const errEl   = document.getElementById('add-member-error');
+  errEl.style.display='none';
+  if (!name) { errEl.textContent='名前を入力してください'; errEl.style.display='block'; return; }
+  showLoading('メンバーを追加中...');
+  try {
+    const newUser = {
+      name, company: company||'', email: email||'',
+      login_id: INITIAL_ID, pass: INITIAL_PASS,
+      role: 'member', status: 'approved', is_first_login: true,
+      joined: new Date().toISOString().slice(0,10)
+    };
+    await dbInsertUser(newUser);
+    hideLoading();
+    ['add-member-name','add-member-company','add-member-email'].forEach(id=>document.getElementById(id).value='');
+    await renderMembersTable();
+    showDashTab('members');
+    toast('✅ '+name+'さんを追加しました。初期ID: '+INITIAL_ID+' / 初期PW: '+INITIAL_PASS);
+  } catch(e) { hideLoading(); errEl.textContent='追加エラー: '+e.message; errEl.style.display='block'; }
+}
+
+async function renderMembersTable() {
+  showLoading('会員一覧を読み込み中...');
+  const users = await dbGetUsers();
+  store.users = users;
+  hideLoading();
+  const approved = users.filter(u=>u.status==='approved');
   document.getElementById('members-tbody').innerHTML=approved.map(u=>`<tr>
-    <td style="font-weight:500">${u.name}</td>
-    <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">${u.email}</td>
-    <td><span class="badge ${u.role==='admin'?'badge-admin':'badge-approved'}">${u.role==='admin'?'管理者':'会員'}</span></td>
+    <td style="font-weight:500">${u.name}<br><span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent)">ID: ${u.login_id}</span></td>
+    <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">${u.email||'—'}</td>
+    <td><span class="badge ${u.role==='admin'?'badge-admin':'badge-approved'}">${u.role==='admin'?'管理者':'会員'}</span>${u.is_first_login?'<span class="badge badge-pending" style="margin-left:4px">初回未設定</span>':''}</td>
     <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">${u.joined}</td>
     <td style="display:flex;gap:6px;flex-wrap:wrap">
       <button class="btn btn-outline btn-sm" onclick="openEditMemberModal(${u.id})">✏️ 編集</button>
+      ${u.role!=='admin'?`<button class="btn btn-ghost btn-sm" onclick="resetMemberCredentials(${u.id})" style="border-color:var(--gold);color:var(--gold)">🔄 リセット</button>`:''}
       ${u.role!=='admin'?`<button class="btn btn-danger btn-sm" onclick="deleteMember(${u.id})">削除</button>`:'—'}
     </td>
   </tr>`).join('');
 }
 
-// ── ADMIN-ONLY: Post & Delete ──
-// ── ATTACHMENTS ──
-// ── CLOUDINARY CONFIG ──
-const CLOUDINARY_CLOUD = 'dszpuffg4';
-const CLOUDINARY_PRESET = 'henjinkai_upload';
+async function resetMemberCredentials(id) {
+  const u = store.users.find(u=>u.id===id); if (!u) return;
+  if (!confirm(u.name+'さんのIDとパスワードを初期値にリセットしますか？')) return;
+  showLoading('リセット中...');
+  try {
+    await dbUpsertUser({ ...u, login_id: INITIAL_ID, pass: INITIAL_PASS, is_first_login: true });
+    hideLoading();
+    await renderMembersTable();
+    toast('🔄 '+u.name+'さんのID・パスワードをリセットしました');
+  } catch(e) { hideLoading(); toast('⚠️ エラー: '+e.message); }
+}
 
-let pendingAttachments = []; // {name, type, size, url, publicId}
+async function deleteArticle(id) {
+  if (!store.currentUser || store.currentUser.role!=='admin') { toast('⛔ 管理者のみ削除できます'); return; }
+  if (!confirm('この投稿を削除しますか？')) return;
+  showLoading('削除中...');
+  try {
+    await dbDeleteArticle(id);
+    hideLoading();
+    store.articles = store.articles.filter(a=>a.id!==id);
+    await renderHome();
+    if (store.currentUser) await renderMemberHome();
+    if (document.getElementById('dash-posts').style.display!=='none') await renderPostsTable();
+    await renderAdminDashboard();
+    toast('🗑️ 投稿を削除しました');
+  } catch(e) { hideLoading(); toast('⚠️ 削除エラー: '+e.message); }
+}
+
+async function deleteMember(id) {
+  const u = store.users.find(u=>u.id===id); if (!u||!confirm(u.name+'さんを削除しますか？')) return;
+  showLoading('削除中...');
+  try {
+    await dbDeleteUser(id);
+    hideLoading();
+    await renderMembersTable();
+    toast('🗑️ 会員を削除しました');
+  } catch(e) { hideLoading(); toast('⚠️ 削除エラー: '+e.message); }
+}
+
+function updatePendingBadge() {
+  const b=document.getElementById('pending-badge'); if(b) b.style.display='none';
+  const mb=document.getElementById('mobile-pending-badge'); if(mb) mb.style.display='none';
+}
+
+// ── FILE UPLOAD (Supabase Storage) ──────────────────────
+let pendingAttachments = [];
 
 function formatSize(bytes) {
   if (bytes < 1024) return bytes+'B';
@@ -906,28 +1174,23 @@ function formatSize(bytes) {
   return (bytes/(1024*1024)).toFixed(1)+'MB';
 }
 function fileIcon(type) {
+  if (!type) return '📎';
   if (type.startsWith('image/')) return '🖼️';
   if (type.includes('pdf')) return '📄';
-  if (type.includes('word') || type.includes('doc')) return '📝';
-  if (type.includes('sheet') || type.includes('excel') || type.includes('xls')) return '📊';
-  if (type.includes('presentation') || type.includes('ppt')) return '📋';
-  if (type.includes('zip') || type.includes('compressed')) return '🗜️';
+  if (type.includes('word')||type.includes('doc')) return '📝';
+  if (type.includes('sheet')||type.includes('excel')||type.includes('xls')) return '📊';
+  if (type.includes('presentation')||type.includes('ppt')) return '📋';
+  if (type.includes('zip')||type.includes('compressed')) return '🗜️';
   return '📎';
 }
 
-async function uploadToCloudinary(file) {
-  const fd = new FormData();
-  fd.append('file', file);
-  fd.append('upload_preset', CLOUDINARY_PRESET);
-  fd.append('folder', 'henjinkai');
-  // 画像以外はraw resourceとして送信
-  const resourceType = file.type.startsWith('image/') ? 'image' : 'raw';
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/${resourceType}/upload`, {
-    method: 'POST', body: fd
-  });
-  if (!res.ok) throw new Error('Upload failed');
-  const data = await res.json();
-  return { url: data.secure_url, publicId: data.public_id };
+async function uploadToSupabase(file) {
+  const ext   = file.name.split('.').pop();
+  const path  = `uploads/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await sb.storage.from('henjinkai').upload(path, file, { contentType: file.type });
+  if (error) throw error;
+  const { data: urlData } = sb.storage.from('henjinkai').getPublicUrl(path);
+  return { url: urlData.publicUrl, path };
 }
 
 async function handleFiles(files) {
@@ -938,228 +1201,183 @@ async function handleFiles(files) {
     pendingAttachments.push({ name: file.name, type: file.type, size: file.size, url: null, uploading: true });
     renderAttachmentPreview();
     try {
-      const { url, publicId } = await uploadToCloudinary(file);
-      pendingAttachments[idx] = { name: file.name, type: file.type, size: file.size, url, publicId, uploading: false };
+      const { url, path } = await uploadToSupabase(file);
+      pendingAttachments[idx] = { name: file.name, type: file.type, size: file.size, url, path, uploading: false };
       toast(`✅ ${file.name} をアップロードしました`);
     } catch(e) {
       pendingAttachments.splice(idx, 1);
-      toast(`⚠️ ${file.name} のアップロードに失敗しました`);
+      toast(`⚠️ ${file.name} のアップロードに失敗しました: ${e.message}`);
     }
     renderAttachmentPreview();
   }
 }
 
 function renderAttachmentPreview() {
-  const el = document.getElementById('attachment-preview');
-  if (!el) return;
-  el.innerHTML = pendingAttachments.map((att, i) => `
+  const el = document.getElementById('attachment-preview'); if (!el) return;
+  el.innerHTML = pendingAttachments.map((att,i)=>`
     <div class="attachment-item">
-      <span class="att-icon">${att.uploading ? '⏳' : fileIcon(att.type)}</span>
+      <span class="att-icon">${att.uploading?'⏳':fileIcon(att.type)}</span>
       <span class="att-name">${att.name}</span>
-      <span class="att-size">${att.uploading ? 'アップロード中...' : formatSize(att.size)}</span>
-      ${att.uploading ? '' : `<button class="att-del" onclick="removeAttachment(${i})" title="削除">✕</button>`}
+      <span class="att-size">${att.uploading?'アップロード中...':formatSize(att.size)}</span>
+      ${att.uploading?'':`<button class="att-del" onclick="removeAttachment(${i})">✕</button>`}
     </div>`).join('');
 }
-
-function removeAttachment(idx) {
-  pendingAttachments.splice(idx, 1);
-  renderAttachmentPreview();
-}
-
+function removeAttachment(idx) { pendingAttachments.splice(idx,1); renderAttachmentPreview(); }
 function renderArticleAttachments(attachments) {
-  if (!attachments || !attachments.length) { document.getElementById('reader-attachments').innerHTML=''; return; }
-  const images = attachments.filter(a => a.type && a.type.startsWith('image/'));
-  const files  = attachments.filter(a => !a.type || !a.type.startsWith('image/'));
-  let html = '';
-  if (images.length) {
-    html += images.map(a => `<img class="reader-image" src="${a.url}" alt="${a.name}">`).join('');
-  }
-  if (files.length) {
-    html += `<div class="reader-attachments"><h4>添付ファイル</h4>` +
-      files.map(a => `<a class="reader-file" href="${a.url}" target="_blank" rel="noopener">
-        <span>${fileIcon(a.type||'')}</span>
-        <span>${a.name}</span>
-        <span style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace">${formatSize(a.size)}</span>
-        <span style="font-size:12px;color:var(--accent)">↓ DL</span>
-      </a>`).join('') + `</div>`;
-  }
-  document.getElementById('reader-attachments').innerHTML = html;
+  if (!attachments||!attachments.length) { document.getElementById('reader-attachments').innerHTML=''; return; }
+  const images = attachments.filter(a=>a.type&&a.type.startsWith('image/'));
+  const files  = attachments.filter(a=>!a.type||!a.type.startsWith('image/'));
+  let html='';
+  if (images.length) html += images.map(a=>`<img class="reader-image" src="${a.url}" alt="${a.name}">`).join('');
+  if (files.length) html += `<div class="reader-attachments"><h4>添付ファイル</h4>`+files.map(a=>`<a class="reader-file" href="${a.url}" target="_blank" rel="noopener"><span>${fileIcon(a.type||'')}</span><span>${a.name}</span><span style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace">${formatSize(a.size)}</span><span style="font-size:12px;color:var(--accent)">↓ DL</span></a>`).join('')+'</div>';
+  document.getElementById('reader-attachments').innerHTML=html;
 }
 
+// ── REACTION SWITCH ──
 function toggleReactionSwitch() {
-  const cb = document.getElementById('new-reactions');
-  cb.checked = !cb.checked;
-  const track = document.getElementById('reaction-switch-track');
-  const thumb = document.getElementById('reaction-switch-thumb');
-  const label = document.getElementById('reaction-switch-label');
-  if (cb.checked) {
-    track.style.background = 'var(--accent)';
-    thumb.style.left = '23px';
-    label.textContent = '表示する'; label.style.color = 'var(--green)';
-  } else {
-    track.style.background = 'var(--border)';
-    thumb.style.left = '3px';
-    label.textContent = '非表示'; label.style.color = 'var(--muted)';
-  }
+  const cb=document.getElementById('new-reactions'); cb.checked=!cb.checked;
+  const track=document.getElementById('reaction-switch-track');
+  const thumb=document.getElementById('reaction-switch-thumb');
+  const label=document.getElementById('reaction-switch-label');
+  if(cb.checked){track.style.background='var(--accent)';thumb.style.left='23px';label.textContent='表示する';label.style.color='var(--green)';}
+  else{track.style.background='var(--border)';thumb.style.left='3px';label.textContent='非表示';label.style.color='var(--muted)';}
 }
 
-function publishPost() {
-  if (!store.currentUser || store.currentUser.role!=='admin') { toast('⛔ 管理者のみ投稿できます'); return; }
-  const title=document.getElementById('new-title').value.trim();
-  const body=document.getElementById('new-body').value.trim();
-  const excerpt=document.getElementById('new-excerpt').value.trim();
+// ── POST ──────────────────────────────────────────────
+async function publishPost() {
+  if (!store.currentUser||store.currentUser.role!=='admin') { toast('⛔ 管理者のみ投稿できます'); return; }
+  const title   = document.getElementById('new-title').value.trim();
+  const body    = document.getElementById('new-body').value.trim();
+  const excerpt = document.getElementById('new-excerpt').value.trim();
   if (!title||!body) { toast('⚠️ タイトルと本文を入力してください'); return; }
+  if (pendingAttachments.some(a=>a.uploading)) { toast('⚠️ アップロード中です'); return; }
   const emojis=['💡','🔬','🦠','🧿','⚡','🌀','🎯','🔮'];
-  const showReactions = document.getElementById('new-reactions').checked;
-  if (pendingAttachments.some(a => a.uploading)) { toast('⚠️ ファイルのアップロード中です。完了をお待ちください'); return; }
-  store.articles.unshift({ id:Date.now(), title, category:document.getElementById('new-category').value, type:document.getElementById('new-type').value, excerpt:excerpt||title, body:body.split('\n\n').map(p=>`<p>${p}</p>`).join(''), date:new Date().toISOString().slice(0,10), emoji:emojis[Math.floor(Math.random()*emojis.length)], showReactions, attachments: [...pendingAttachments] });
-  saveArticles();
-  toast('✅ 投稿を公開しました');
-  clearPostForm();
-  renderAdminDashboard();
+  const show_reactions = document.getElementById('new-reactions').checked;
+  const newArticle = {
+    title,
+    category: document.getElementById('new-category').value,
+    type: document.getElementById('new-type').value,
+    excerpt: excerpt||title,
+    body: body.split('\n\n').map(p=>`<p>${p}</p>`).join(''),
+    date: new Date().toISOString().slice(0,10),
+    emoji: emojis[Math.floor(Math.random()*emojis.length)],
+    show_reactions,
+    attachments: [...pendingAttachments]
+  };
+  showLoading('投稿を公開中...');
+  try {
+    await dbInsertArticle(newArticle);
+    hideLoading();
+    toast('✅ 投稿を公開しました');
+    clearPostForm();
+    await renderAdminDashboard();
+  } catch(e) { hideLoading(); toast('⚠️ 投稿エラー: '+e.message); }
 }
 
 function clearPostForm() {
   ['new-title','new-excerpt','new-body'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('new-category').selectedIndex=0;
   document.getElementById('new-type').selectedIndex=0;
-  const cb = document.getElementById('new-reactions');
-  if (cb && !cb.checked) toggleReactionSwitch();
-  pendingAttachments = [];
-  renderAttachmentPreview();
+  const cb=document.getElementById('new-reactions');
+  if(cb&&!cb.checked) toggleReactionSwitch();
+  pendingAttachments=[]; renderAttachmentPreview();
 }
 
-function deleteArticle(id) {
-  if (!store.currentUser || store.currentUser.role!=='admin') { toast('⛔ 管理者のみ削除できます'); return; }
-  if (!confirm('この投稿を削除しますか？')) return;
-  store.articles=store.articles.filter(a=>a.id!==id);
-  saveArticles(); // ← 永続保存
-  renderHome();
-  if (store.currentUser) renderMemberHome();
-  if (document.getElementById('dash-posts').style.display!=='none') renderPostsTable();
-  renderAdminDashboard();
-  toast('🗑️ 投稿を削除しました');
-}
-
-function approveUser(id) {
-  const u=store.users.find(u=>u.id===id); if (!u) return;
-  u.status='approved';
-  saveUsers(); // ← 永続保存
-  renderRequestsTable(); renderAdminDashboard(); updatePendingBadge();
-  toast('✅ '+u.name+'さんの入会を承認しました');
-}
-function rejectUser(id) {
-  const u=store.users.find(u=>u.id===id); if (!u||!confirm(u.name+'さんの申請を却下しますか？')) return;
-  u.status='rejected';
-  saveUsers(); // ← 永続保存
-  renderRequestsTable(); renderAdminDashboard(); updatePendingBadge();
-  toast('❌ '+u.name+'さんの申請を却下しました');
-}
-function deleteMember(id) {
-  const u=store.users.find(u=>u.id===id); if (!u||!confirm(u.name+'さんを削除しますか？')) return;
-  store.users=store.users.filter(x=>x.id!==id);
-  saveUsers(); // ← 永続保存
-  renderMembersTable(); renderRequestsTable(); renderAdminDashboard(); updatePendingBadge();
-  toast('🗑️ 会員を削除しました');
-}
-function updatePendingBadge() {
-  const count=store.users.filter(u=>u.status==='pending').length;
-  const b=document.getElementById('pending-badge');
-  if (b) { b.textContent=count; b.style.display=count>0?'inline':'none'; }
-  const mb=document.getElementById('mobile-pending-badge');
-  if (mb) { mb.textContent=count; mb.style.display=count>0?'inline':'none'; }
-}
-
-// ── PROFILE ──
+// ── PROFILE ──────────────────────────────────────────
 function showProfilePage() {
   const u=store.currentUser;
   store.prevPage=u.role==='admin'?'admin':'member';
   document.getElementById('profile-avatar').textContent=u.name.charAt(0);
   document.getElementById('profile-name').textContent=u.name;
-  document.getElementById('profile-email').textContent=u.email;
+  document.getElementById('profile-email').textContent='ID: '+u.login_id+(u.email?' / '+u.email:'');
   document.getElementById('profile-badges').innerHTML=`<span class="badge ${u.role==='admin'?'badge-admin':'badge-approved'}">${u.role==='admin'?'管理者':'会員'}</span><span class="badge" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border)">入会: ${u.joined}</span>`;
   document.getElementById('edit-name').value=u.name;
   document.getElementById('edit-company').value=u.company||'';
-  document.getElementById('edit-email').value=u.email;
+  document.getElementById('edit-email').value=u.email||'';
   document.getElementById('edit-pass').value='';
   showPage('profile');
 }
-function saveProfile() {
+async function saveProfile() {
   const name=document.getElementById('edit-name').value.trim();
   const company=document.getElementById('edit-company').value.trim();
   const email=document.getElementById('edit-email').value.trim();
   const pass=document.getElementById('edit-pass').value;
-  if (!name||!email) { toast('⚠️ 名前とメールは必須です'); return; }
-  if (pass && pass.length<6) { toast('⚠️ パスワードは6文字以上にしてください'); return; }
-  const dup=store.users.find(u=>u.email===email && u.id!==store.currentUser.id);
-  if (dup) { toast('⚠️ そのメールアドレスはすでに使われています'); return; }
-  const u=store.users.find(u=>u.id===store.currentUser.id);
-  u.name=name; u.company=company; u.email=email;
-  if (pass) u.pass=pass;
-  store.currentUser=u;
-  saveUsers();
-  updateNav(); showProfilePage(); toast('✅ プロフィールを更新しました');
+  if (!name) { toast('⚠️ 名前は必須です'); return; }
+  if (pass&&pass.length<6) { toast('⚠️ パスワードは6文字以上にしてください'); return; }
+  showLoading('保存中...');
+  try {
+    const updated = { ...store.currentUser, name, company, email };
+    if (pass) updated.pass = pass;
+    await dbUpsertUser(updated);
+    store.currentUser = updated;
+    hideLoading(); updateNav(); showProfilePage();
+    toast('✅ プロフィールを更新しました');
+  } catch(e) { hideLoading(); toast('⚠️ 更新エラー: '+e.message); }
 }
-function deleteOwnAccount() {
+async function deleteOwnAccount() {
   const u=store.currentUser;
   if (u.role==='admin') { toast('⛔ 管理者アカウントは削除できません'); return; }
   if (!confirm('本当にアカウントを削除しますか？\nこの操作は取り消せません。')) return;
-  store.users=store.users.filter(x=>x.id!==u.id);
-  saveUsers();
-  store.currentUser=null;
-  localStorage.removeItem(LS_SESSION);
-  updateNav(); showPage('home');
-  toast('🗑️ アカウントを削除しました');
+  showLoading('削除中...');
+  try {
+    await dbDeleteUser(u.id);
+    hideLoading();
+    store.currentUser=null; localStorage.removeItem(LS_SESSION);
+    updateNav(); showPage('home'); renderHome();
+    toast('🗑️ アカウントを削除しました');
+  } catch(e) { hideLoading(); toast('⚠️ 削除エラー: '+e.message); }
 }
 
 // ── ADMIN: Edit Member ──
 function openEditMemberModal(id) {
-  const u=store.users.find(u=>u.id===id); if (!u) return;
+  const u=store.users.find(u=>u.id===id); if(!u) return;
   document.getElementById('edit-member-id').value=u.id;
   document.getElementById('edit-member-name').value=u.name;
   document.getElementById('edit-member-company').value=u.company||'';
-  document.getElementById('edit-member-email').value=u.email;
+  document.getElementById('edit-member-email').value=u.email||'';
   document.getElementById('edit-member-pass').value='';
   document.getElementById('edit-member-role').value=u.role;
   document.getElementById('edit-member-error').style.display='none';
   showModal('edit-member-modal');
 }
-function saveEditMember() {
+async function saveEditMember() {
   const id=parseInt(document.getElementById('edit-member-id').value);
   const name=document.getElementById('edit-member-name').value.trim();
   const company=document.getElementById('edit-member-company').value.trim();
   const email=document.getElementById('edit-member-email').value.trim();
   const pass=document.getElementById('edit-member-pass').value;
   const role=document.getElementById('edit-member-role').value;
-  if (!name||!email) { showError('edit-member-error','名前とメールは必須です'); return; }
-  if (pass && pass.length<6) { showError('edit-member-error','パスワードは6文字以上にしてください'); return; }
-  const dup=store.users.find(u=>u.email===email && u.id!==id);
-  if (dup) { showError('edit-member-error','そのメールアドレスはすでに使われています'); return; }
-  const u=store.users.find(u=>u.id===id); if (!u) return;
-  u.name=name; u.company=company; u.email=email; u.role=role;
-  if (pass) u.pass=pass;
-  if (store.currentUser && store.currentUser.id===id) store.currentUser=u;
-  saveUsers();
-  hideModal('edit-member-modal');
-  renderMembersTable(); updateNav();
-  toast('✅ '+name+'さんの情報を更新しました');
+  if (!name) { showError('edit-member-error','名前は必須です'); return; }
+  if (pass&&pass.length<6) { showError('edit-member-error','パスワードは6文字以上にしてください'); return; }
+  const u=store.users.find(u=>u.id===id); if(!u) return;
+  const updated = { ...u, name, company, email, role };
+  if (pass) updated.pass=pass;
+  showLoading('保存中...');
+  try {
+    await dbUpsertUser(updated);
+    if (store.currentUser&&store.currentUser.id===id) store.currentUser=updated;
+    hideLoading(); hideModal('edit-member-modal');
+    await renderMembersTable(); updateNav();
+    toast('✅ '+name+'さんの情報を更新しました');
+  } catch(e) { hideLoading(); showError('edit-member-error','更新エラー: '+e.message); }
 }
 
 // ── MEMBER DIRECTORY ──
-function openDirectory() {
-  store.prevPage = store.currentUser.role==='admin' ? 'admin' : 'member';
-  const members = store.users.filter(u => u.status==='approved');
-  document.getElementById('dir-count').textContent = members.length + ' members';
-  document.getElementById('directory-grid').innerHTML = members.map(u => `
+async function openDirectory() {
+  store.prevPage = store.currentUser.role==='admin'?'admin':'member';
+  showLoading('読み込み中...');
+  const users = await dbGetUsers();
+  store.users = users;
+  hideLoading();
+  const members = users.filter(u=>u.status==='approved');
+  document.getElementById('dir-count').textContent=members.length+' members';
+  document.getElementById('directory-grid').innerHTML=members.map(u=>`
     <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:16px;transition:background 0.15s"
-      onmouseover="this.style.background='rgba(124,92,252,0.06)'"
-      onmouseout="this.style.background='var(--surface)'">
-      <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Zen Antique Soft',serif;font-size:16px;color:#fff;flex-shrink:0">
-        ${u.name.charAt(0)}
-      </div>
+      onmouseover="this.style.background='rgba(124,92,252,0.06)'" onmouseout="this.style.background='var(--surface)'">
+      <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Zen Antique Soft',serif;font-size:16px;color:#fff;flex-shrink:0">${u.name.charAt(0)}</div>
       <div style="flex:1;min-width:0">
         <div style="font-family:'Zen Antique Soft',serif;font-size:15px;letter-spacing:1px">${u.name}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">${u.company || '—'}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${u.company||'—'}</div>
       </div>
       <span class="badge ${u.role==='admin'?'badge-admin':'badge-approved'}">${u.role==='admin'?'管理者':'会員'}</span>
     </div>`).join('');
@@ -1170,117 +1388,96 @@ function openDirectory() {
 function showModal(id) { document.getElementById(id).classList.add('open'); }
 function hideModal(id) {
   document.getElementById(id).classList.remove('open');
-  ['login-error','reg-error','reg-success'].forEach(e=>{ const el=document.getElementById(e); if(el) el.style.display='none'; });
+  ['login-error'].forEach(e=>{ const el=document.getElementById(e); if(el) el.style.display='none'; });
 }
 function closeModal(e,id) { if(e.target===e.currentTarget) hideModal(id); }
 function switchModal(from,to) { hideModal(from); showModal(to); }
-function showError(id,msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; }
-// ── MAIL ──
-const LS_EJSCONFIG = 'henjinkai_ejsconfig';
-const LS_MAILHISTORY = 'henjinkai_mailhistory';
-
-function loadEmailJSConfig() {
-  try { return JSON.parse(localStorage.getItem(LS_EJSCONFIG)) || {}; } catch(e) { return {}; }
-}
-function saveEmailJSConfig() {
-  const cfg = {
-    pubkey: document.getElementById('ejs-pubkey').value.trim(),
-    service: document.getElementById('ejs-service').value.trim(),
-    template: document.getElementById('ejs-template').value.trim(),
-  };
-  if (!cfg.pubkey || !cfg.service || !cfg.template) { document.getElementById('ejs-status').textContent='⚠️ 3項目すべて入力してください'; return; }
-  localStorage.setItem(LS_EJSCONFIG, JSON.stringify(cfg));
-  document.getElementById('ejs-status').textContent='✅ 保存しました';
-  setTimeout(()=>document.getElementById('ejs-status').textContent='', 3000);
-}
-
-function renderMailTab() {
-  const cfg = loadEmailJSConfig();
-  if (cfg.pubkey) document.getElementById('ejs-pubkey').value = cfg.pubkey;
-  if (cfg.service) document.getElementById('ejs-service').value = cfg.service;
-  if (cfg.template) document.getElementById('ejs-template').value = cfg.template;
-
-  const members = store.users.filter(u => u.status === 'approved');
-  const list = document.getElementById('recipient-list');
-  list.innerHTML = members.length ? members.map(u => `
-    <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border-radius:6px;cursor:pointer;border:1px solid var(--border)">
-      <input type="checkbox" data-uid="${u.id}" checked style="accent-color:var(--accent);width:16px;height:16px">
-      <span style="font-size:13px;font-weight:500">${u.name}</span>
-      <span style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-left:auto">${u.email}</span>
-      <span class="badge ${u.role==='admin'?'badge-admin':'badge-approved'}">${u.role==='admin'?'管理者':'会員'}</span>
-    </label>`).join('') : '<div class="empty-state"><div class="empty-icon">👥</div><p>承認済み会員がいません</p></div>';
-  renderMailHistory();
-}
-
-function selectAllRecipients() {
-  document.querySelectorAll('#recipient-list input[type=checkbox]').forEach(c=>c.checked=true);
-}
-function deselectAllRecipients() {
-  document.querySelectorAll('#recipient-list input[type=checkbox]').forEach(c=>c.checked=false);
-}
-
-async function sendMail() {
-  const cfg = loadEmailJSConfig();
-  if (!cfg.pubkey || !cfg.service || !cfg.template) { toast('⚠️ まずEmailJS設定を入力・保存してください'); return; }
-  const subject = document.getElementById('mail-subject').value.trim();
-  const body = document.getElementById('mail-body').value.trim();
-  if (!subject || !body) { toast('⚠️ 件名と本文を入力してください'); return; }
-  const checked = [...document.querySelectorAll('#recipient-list input[type=checkbox]:checked')];
-  if (!checked.length) { toast('⚠️ 送信先を選択してください'); return; }
-  const recipients = checked.map(c => store.users.find(u=>u.id===parseInt(c.dataset.uid))).filter(Boolean);
-  const btn = document.getElementById('send-mail-btn');
-  const status = document.getElementById('mail-send-status');
-  btn.disabled = true; btn.textContent = '送信中...';
-  emailjs.init(cfg.pubkey);
-  let success = 0, fail = 0;
-  for (const u of recipients) {
-    try {
-      await emailjs.send(cfg.service, cfg.template, {
-        to_name: u.name, to_email: u.email, subject, message: body, from_name: '変人会',
-      });
-      success++;
-    } catch(e) { console.error('EmailJS error', u.email, e); fail++; }
-    status.textContent = `送信中... ${success+fail}/${recipients.length}`;
-  }
-  const history = JSON.parse(localStorage.getItem(LS_MAILHISTORY) || '[]');
-  history.unshift({ subject, count: recipients.length, success, fail, date: new Date().toLocaleString('ja-JP'), sender: store.currentUser.name });
-  localStorage.setItem(LS_MAILHISTORY, JSON.stringify(history.slice(0, 30)));
-  btn.disabled = false; btn.textContent = '📨 送信する'; status.textContent = '';
-  renderMailHistory();
-  toast(fail===0 ? `✅ ${success}件送信完了` : `⚠️ 成功${success}件 / 失敗${fail}件`);
-}
-
-function renderMailHistory() {
-  const history = JSON.parse(localStorage.getItem(LS_MAILHISTORY) || '[]');
-  const tbody = document.getElementById('mail-history-tbody');
-  if (!tbody) return;
-  if (!history.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📭</div><p>送信履歴はありません</p></div></td></tr>'; return; }
-  tbody.innerHTML = history.map(h => `<tr>
-    <td style="font-weight:500">${h.subject}</td>
-    <td style="color:var(--muted);font-size:12px">${h.count}人</td>
-    <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">${h.date}</td>
-    <td><span class="badge ${h.fail===0?'badge-approved':'badge-pending'}">${h.fail===0?'✓ 成功':'⚠ 一部失敗'}</span></td>
-  </tr>`).join('');
-}
-
-// ── MODALS ──
-function showModal(id) { document.getElementById(id).classList.add('open'); }
-function hideModal(id) {
-  document.getElementById(id).classList.remove('open');
-  ['login-error','reg-error','reg-success'].forEach(e=>{ const el=document.getElementById(e); if(el) el.style.display='none'; });
-}
-function closeModal(e,id) { if(e.target===e.currentTarget) hideModal(id); }
-function switchModal(from,to) { hideModal(from); showModal(to); }
-function showError(id,msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; }
+function showError(id,msg) { const el=document.getElementById(id); if(el){ el.textContent=msg; el.style.display='block'; } }
 function toast(msg) {
   const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-// ── INIT ──
-renderHome();
-updatePendingBadge();
-restoreSession();
+// ── MAIL (EmailJS - 設定は手動) ──
+const LS_EJSCONFIG = 'henjinkai_ejsconfig';
+function loadEmailJSConfig() { try { return JSON.parse(localStorage.getItem(LS_EJSCONFIG))||{}; } catch(e) { return {}; } }
+function saveEmailJSConfig() {
+  const cfg={pubkey:document.getElementById('ejs-pubkey').value.trim(),service:document.getElementById('ejs-service').value.trim(),template:document.getElementById('ejs-template').value.trim()};
+  if(!cfg.pubkey||!cfg.service||!cfg.template){document.getElementById('ejs-status').textContent='⚠️ 3項目すべて入力してください';return;}
+  localStorage.setItem(LS_EJSCONFIG,JSON.stringify(cfg));
+  document.getElementById('ejs-status').textContent='✅ 保存しました';
+  setTimeout(()=>document.getElementById('ejs-status').textContent='',3000);
+}
+async function renderMailTab() {
+  const cfg=loadEmailJSConfig();
+  if(cfg.pubkey) document.getElementById('ejs-pubkey').value=cfg.pubkey;
+  if(cfg.service) document.getElementById('ejs-service').value=cfg.service;
+  if(cfg.template) document.getElementById('ejs-template').value=cfg.template;
+  const users = store.users.length ? store.users : await dbGetUsers();
+  const members=users.filter(u=>u.status==='approved');
+  const list=document.getElementById('recipient-list');
+  list.innerHTML=members.length?members.map(u=>`
+    <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border-radius:6px;cursor:pointer;border:1px solid var(--border)">
+      <input type="checkbox" data-uid="${u.id}" checked style="accent-color:var(--accent);width:16px;height:16px">
+      <span style="font-size:13px;font-weight:500">${u.name}</span>
+      <span style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-left:auto">${u.email||'—'}</span>
+      <span class="badge ${u.role==='admin'?'badge-admin':'badge-approved'}">${u.role==='admin'?'管理者':'会員'}</span>
+    </label>`).join(''):'<div class="empty-state"><div class="empty-icon">👥</div><p>承認済み会員がいません</p></div>';
+  renderMailHistory();
+}
+function selectAllRecipients() { document.querySelectorAll('#recipient-list input[type=checkbox]').forEach(c=>c.checked=true); }
+function deselectAllRecipients() { document.querySelectorAll('#recipient-list input[type=checkbox]').forEach(c=>c.checked=false); }
+async function sendMail() {
+  const cfg=loadEmailJSConfig();
+  if(!cfg.pubkey||!cfg.service||!cfg.template){toast('⚠️ まずEmailJS設定を入力・保存してください');return;}
+  const subject=document.getElementById('mail-subject').value.trim();
+  const body=document.getElementById('mail-body').value.trim();
+  if(!subject||!body){toast('⚠️ 件名と本文を入力してください');return;}
+  const checked=[...document.querySelectorAll('#recipient-list input[type=checkbox]:checked')];
+  if(!checked.length){toast('⚠️ 送信先を選択してください');return;}
+  const users=store.users.length?store.users:await dbGetUsers();
+  const recipients=checked.map(c=>users.find(u=>u.id===parseInt(c.dataset.uid))).filter(Boolean);
+  const btn=document.getElementById('send-mail-btn');
+  const status=document.getElementById('mail-send-status');
+  btn.disabled=true; btn.textContent='送信中...';
+  emailjs.init(cfg.pubkey);
+  let success=0,fail=0;
+  for(const u of recipients){
+    try{await emailjs.send(cfg.service,cfg.template,{to_name:u.name,to_email:u.email,subject,message:body,from_name:'変人会'});success++;}
+    catch(e){fail++;}
+    status.textContent=`送信中... ${success+fail}/${recipients.length}`;
+  }
+  const history=JSON.parse(localStorage.getItem('henjinkai_mailhistory')||'[]');
+  history.unshift({subject,count:recipients.length,success,fail,date:new Date().toLocaleString('ja-JP'),sender:store.currentUser.name});
+  localStorage.setItem('henjinkai_mailhistory',JSON.stringify(history.slice(0,30)));
+  btn.disabled=false; btn.textContent='📨 送信する'; status.textContent='';
+  renderMailHistory();
+  toast(fail===0?`✅ ${success}件送信完了`:`⚠️ 成功${success}件 / 失敗${fail}件`);
+}
+function renderMailHistory() {
+  const history=JSON.parse(localStorage.getItem('henjinkai_mailhistory')||'[]');
+  const tbody=document.getElementById('mail-history-tbody'); if(!tbody) return;
+  if(!history.length){tbody.innerHTML='<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📭</div><p>送信履歴はありません</p></div></td></tr>';return;}
+  tbody.innerHTML=history.map(h=>`<tr><td style="font-weight:500">${h.subject}</td><td style="color:var(--muted);font-size:12px">${h.count}人</td><td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">${h.date}</td><td><span class="badge ${h.fail===0?'badge-approved':'badge-pending'}">${h.fail===0?'✓ 成功':'⚠ 一部失敗'}</span></td></tr>`).join('');
+}
+
+// approveUser / rejectUser 廃止
+function approveUser(id) {}
+function rejectUser(id) {}
+
+// ── INIT ──────────────────────────────────────────────
+async function init() {
+  const ok = initSupabase();
+  if (!ok) {
+    showPage('setup');
+    return;
+  }
+  await renderHome();
+  updatePendingBadge();
+  await restoreSession();
+}
+
+init();
 </script>
 </body>
 </html>
