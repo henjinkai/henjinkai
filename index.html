@@ -128,7 +128,7 @@ nav { display:flex; gap:8px; align-items:center; flex-shrink:0; }
 .locked-actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
 
 .dashboard-layout { display:grid; grid-template-columns:180px 1fr; min-height:calc(100vh - 60px); }
-.sidebar { background:var(--surface); border-right:1px solid var(--border); padding:16px 0; overflow-y:auto; }
+.sidebar { background:var(--surface); border-right:1px solid var(--border); padding:16px 0; overflow-y:auto; position:sticky; top:60px; height:calc(100vh - 60px); }
 .sidebar-brand { padding:0 14px 14px; border-bottom:1px solid var(--border); margin-bottom:4px; }
 .sidebar-role { font-family:'Space Mono',monospace; font-size:9px; color:var(--accent2); letter-spacing:2px; margin-top:2px; }
 .sidebar-section { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; padding:10px 14px 4px; opacity:0.6; }
