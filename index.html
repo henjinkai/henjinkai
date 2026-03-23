@@ -400,7 +400,7 @@ tr:hover td { background:rgba(124,92,252,0.04); }
           <div class="form-group"><label>メールアドレス（任意）</label><input type="email" id="add-member-email" placeholder="you@example.com"></div>
           <div style="padding:10px 14px;background:rgba(124,92,252,0.08);border:1px solid rgba(124,92,252,0.2);border-radius:6px;font-size:12px;color:var(--muted);margin-bottom:16px;font-family:'Space Mono',monospace;line-height:1.9">
             追加されたメンバーには初期ID・パスワードが設定されます<br>
-            初期ID: <span style="color:var(--accent)">henjin</span> &nbsp;/&nbsp; 初期パスワード: <span style="color:var(--accent)">dayone</span><br>
+            初期ID: <span style="color:var(--accent)" id="info-initial-id">henjin</span> &nbsp;/&nbsp; 初期パスワード: <span style="color:var(--accent)">dayone</span><br>
             初回ログイン時に本人がID・パスワードを変更します
           </div>
           <button class="btn btn-green" onclick="adminAddMember()">➕ メンバーを追加する</button>
@@ -542,7 +542,11 @@ tr:hover td { background:rgba(124,92,252,0.04); }
           </div>
           <div class="form-group">
             <label>パスワードの確認 <span style="color:var(--red)">*</span></label>
-            <input type="password" id="fl-confirm-pass" placeholder="もう一度入力してください" autocomplete="new-password" onkeydown="if(event.key==='Enter')doFirstLoginSetup()">
+            <input type="password" id="fl-confirm-pass" placeholder="もう一度入力してください" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label>メールアドレス <span style="color:var(--muted);font-size:10px">（任意）</span></label>
+            <input type="email" id="fl-email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')doFirstLoginSetup()">
           </div>
           <button class="btn btn-accent" style="width:100%;padding:13px;font-size:14px;margin-top:8px" onclick="doFirstLoginSetup()">
             ✅ 設定して入室する
@@ -889,10 +893,11 @@ async function doFirstLoginSetup() {
   // ID重複チェック
   const { data: dup } = await sb.from('users').select('id').eq('login_id', newId).neq('id', store.currentUser.id);
   if (dup && dup.length > 0) { errEl.textContent='そのIDはすでに使用されています'; errEl.style.display='block'; return; }
+  const newEmail = document.getElementById('fl-email').value.trim();
   showLoading('設定を保存中...');
   try {
-    await dbUpsertUser({ ...store.currentUser, login_id: newId, pass: newPass, is_first_login: false });
-    store.currentUser = { ...store.currentUser, login_id: newId, pass: newPass, is_first_login: false };
+    await dbUpsertUser({ ...store.currentUser, login_id: newId, pass: newPass, email: newEmail, is_first_login: false });
+    store.currentUser = { ...store.currentUser, login_id: newId, pass: newPass, email: newEmail, is_first_login: false };
     hideLoading();
     updateNav();
     toast('✅ ID・パスワードを設定しました。ようこそ、'+store.currentUser.name+'さん！');
