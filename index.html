@@ -1090,11 +1090,20 @@ async function adminAddMember() {
   const errEl   = document.getElementById('add-member-error');
   errEl.style.display='none';
   if (!name) { errEl.textContent='名前を入力してください'; errEl.style.display='block'; return; }
+  // 初期IDをユニークに生成（henjin + ランダム4桁数字）
+  let uniqueLoginId = INITIAL_ID;
+  let attempts = 0;
+  while (attempts < 10) {
+    const { data } = await sb.from('users').select('id').eq('login_id', uniqueLoginId).maybeSingle();
+    if (!data) break; // 重複なし
+    uniqueLoginId = INITIAL_ID + Math.floor(1000 + Math.random() * 9000);
+    attempts++;
+  }
   showLoading('メンバーを追加中...');
   try {
     const newUser = {
       name, company: company||'', email: email||'',
-      login_id: INITIAL_ID, pass: INITIAL_PASS,
+      login_id: uniqueLoginId, pass: INITIAL_PASS,
       role: 'member', status: 'approved', is_first_login: true,
       joined: new Date().toISOString().slice(0,10)
     };
@@ -1103,7 +1112,7 @@ async function adminAddMember() {
     ['add-member-name','add-member-company','add-member-email'].forEach(id=>document.getElementById(id).value='');
     await renderMembersTable();
     showDashTab('members');
-    toast('✅ '+name+'さんを追加しました。初期ID: '+INITIAL_ID+' / 初期PW: '+INITIAL_PASS);
+    toast('✅ '+name+'さんを追加しました。初期ID: '+uniqueLoginId+' / 初期PW: '+INITIAL_PASS);
   } catch(e) { hideLoading(); errEl.textContent='追加エラー: '+e.message; errEl.style.display='block'; }
 }
 
