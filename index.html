@@ -353,7 +353,7 @@ tr:hover td { background:rgba(124,92,252,0.04); }
           <div class="form-group"><label>タイトル</label><input type="text" id="new-title" placeholder="投稿タイトルを入力"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div class="form-group"><label>カテゴリ</label>
-              <select id="new-category"><option>テクノロジー</option><option>ビジネス</option><option>科学</option><option>アート</option><option>哲学</option><option>その他</option></select>
+              <select id="new-category"><option>お知らせ</option><option>イベント</option><option>その他</option></select>
             </div>
             <div class="form-group"><label>公開設定</label>
               <select id="new-type"><option value="free">全員に公開</option><option value="member">会員限定</option></select>
@@ -422,23 +422,14 @@ tr:hover td { background:rgba(124,92,252,0.04); }
         <div class="dash-title">メール配信</div>
         <div class="dash-subtitle">// 承認済み会員へ一斉送信</div>
 
-        <!-- EmailJS設定パネル -->
-        <div class="post-form" style="margin-bottom:20px">
-          <h3 style="font-size:14px;color:var(--muted)">⚙️ EmailJS 設定</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px">
-            <div class="form-group" style="margin:0"><label>Public Key</label><input type="text" id="ejs-pubkey" placeholder="your_public_key"></div>
-            <div class="form-group" style="margin:0"><label>Service ID</label><input type="text" id="ejs-service" placeholder="service_xxxxxxx"></div>
-            <div class="form-group" style="margin:0"><label>Template ID</label><input type="text" id="ejs-template" placeholder="template_xxxxxxx"></div>
-          </div>
-          <div style="display:flex;gap:10px;margin-top:12px;align-items:center">
-            <button class="btn btn-outline btn-sm" onclick="saveEmailJSConfig()">設定を保存</button>
-            <span id="ejs-status" style="font-size:12px;color:var(--muted);font-family:'Space Mono',monospace"></span>
-          </div>
-          <div style="margin-top:12px;padding:10px 12px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--muted);line-height:1.9">
-            📌 <a href="https://www.emailjs.com" target="_blank" style="color:var(--accent)">emailjs.com</a> で無料登録 → Public Key / Service ID / Template ID を取得して上に入力してください。<br>
-            テンプレートの変数: <code style="color:var(--gold)">{{to_name}}</code> {{to_email}} <code style="color:var(--gold)">{{subject}}</code> <code style="color:var(--gold)">{{message}}</code>
-          </div>
+        <!-- EmailJS設定パネル（設定済み） -->
+        <div style="margin-bottom:16px;padding:12px 16px;background:rgba(61,220,151,0.08);border:1px solid rgba(61,220,151,0.2);border-radius:8px;font-size:12px;line-height:1.9">
+          ✅ <strong style="color:var(--green)">EmailJS 設定済み</strong>（Gmail連携）<br>
+          <span style="color:var(--muted);font-family:'Space Mono',monospace;font-size:11px">
+            Service: service_ovzk7vi　/　Template: template_zlrlti8
+          </span>
         </div>
+        <span id="ejs-status" style="display:none"></span>
 
         <!-- 送信先選択 -->
         <div class="post-form" style="margin-bottom:20px">
@@ -752,11 +743,8 @@ function showSetupError(msg) {
 
 // ── CARD COLORS ──
 const CARD_COLORS = {
-  'テクノロジー':'linear-gradient(135deg,#1a1a2e,#16213e)',
-  'ビジネス':'linear-gradient(135deg,#1a1a1a,#2d1b2e)',
-  '科学':'linear-gradient(135deg,#0d1f0d,#1a2f1a)',
-  'アート':'linear-gradient(135deg,#2d1b00,#1a1000)',
-  '哲学':'linear-gradient(135deg,#1a0d2e,#0d0d1f)',
+  'お知らせ':'linear-gradient(135deg,#1a1a2e,#16213e)',
+  'イベント':'linear-gradient(135deg,#1a0d2e,#0d0d1f)',
   'その他':'linear-gradient(135deg,#1a1a1f,#0d0d12)',
 };
 
@@ -1416,8 +1404,14 @@ function toast(msg) {
 }
 
 // ── MAIL (EmailJS - 設定は手動) ──
+// ── EMAILJS CONFIG (埋め込み済み) ──
+const EJS_PUBKEY   = 'GF1Nx35iwv5pTtKh3';
+const EJS_SERVICE  = 'service_ovzk7vi';
+const EJS_TEMPLATE = 'template_zlrlti8';
 const LS_EJSCONFIG = 'henjinkai_ejsconfig';
-function loadEmailJSConfig() { try { return JSON.parse(localStorage.getItem(LS_EJSCONFIG))||{}; } catch(e) { return {}; } }
+function loadEmailJSConfig() {
+  return { pubkey: EJS_PUBKEY, service: EJS_SERVICE, template: EJS_TEMPLATE };
+}
 function saveEmailJSConfig() {
   const cfg={pubkey:document.getElementById('ejs-pubkey').value.trim(),service:document.getElementById('ejs-service').value.trim(),template:document.getElementById('ejs-template').value.trim()};
   if(!cfg.pubkey||!cfg.service||!cfg.template){document.getElementById('ejs-status').textContent='⚠️ 3項目すべて入力してください';return;}
